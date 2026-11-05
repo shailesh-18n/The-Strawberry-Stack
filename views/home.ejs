@@ -1,0 +1,57 @@
+<%- include('partials/header') %>
+<div class="hero">
+  <div class="row align-items-center g-4">
+    <div class="col-lg-7">
+      <p class="text-primary fw-semibold mb-2">Version Control for Human Potential</p>
+      <h1 class="display-5 fw-bold">Build skills, track progress, and prove real ability.</h1>
+      <p class="lead mt-3">
+        VidyaChain helps students discover career paths, close skill gaps, learn in Bengali or English,
+        complete assessments, and earn verified skill credentials.
+      </p>
+      <% if (!user) { %>
+        <div class="d-flex gap-3 mt-4">
+          <a href="/auth/register" class="btn btn-primary btn-lg">Join as a Student</a>
+          <a href="/auth/login" class="btn btn-outline-primary btn-lg">Login</a>
+        </div>
+      <% } else { %>
+        <div class="d-flex gap-3 mt-4">
+          <a href="/dashboard" class="btn btn-primary btn-lg">Go to Dashboard</a>
+          <a href="/assistant" class="btn btn-outline-primary btn-lg">Ask the AI tutor</a>
+        </div>
+      <% } %>
+    </div>
+    <div class="col-lg-5">
+      <div class="card p-4">
+        <h3 class="mb-3">Demo Journey</h3>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">1. Register as Vivek</li>
+          <li class="list-group-item">2. Choose Bengali and Python Developer</li>
+          <li class="list-group-item">3. Follow roadmap and AI tutor</li>
+          <li class="list-group-item">4. Complete challenge and earn credential</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-5 g-4">
+  <div class="col-md-4">
+    <div class="card h-100 p-4">
+      <h4>Career Navigator</h4>
+      <p>AI-supported guidance connected to structured skill goals.</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 p-4">
+      <h4>SkillTrack</h4>
+      <p>Git-inspired progress timeline for achievements, milestones, and learning history.</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100 p-4">
+      <h4>Credential Passport</h4>
+      <p>Signed record with QR verification for shareable demonstration of skills.</p>
+    </div>
+  </div>
+</div>
+<%- include('partials/footer') %>

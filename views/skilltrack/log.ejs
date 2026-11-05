@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<div class="mb-4">
+  <p class="text-primary fw-semibold mb-1">SkillTrack</p>
+  <h1>Learning history</h1>
+</div>
+
+<div class="card p-4">
+  <% if (records.length) { %>
+    <% records.forEach((record) => { %>
+      <div class="timeline-item">
+        <h5><%= record.commitMessage %></h5>
+        <p class="mb-1"><strong>Skill:</strong> <%= record.skillName %></p>
+        <p class="mb-1"><strong>Change:</strong> <%= record.changeSummary %></p>
+        <small class="text-muted"><%= new Date(record.createdAt).toLocaleString() %></small>
+      </div>
+    <% }) %>
+  <% } else { %>
+    <p class="text-muted">No history yet. Complete an assessment to generate a milestone.</p>
+  <% } %>
+</div>
+<%- include('../partials/footer') %>

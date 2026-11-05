@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card p-4">
+      <h2 class="mb-3">Create your student profile</h2>
+      <% if (error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+      <% } %>
+      <form method="POST" action="/auth/register">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Full name</label>
+            <input class="form-control" name="name" required value="Vivek Das" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input class="form-control" type="email" name="email" required value="vivek@vidyachain.app" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Password</label>
+            <input class="form-control" type="password" name="password" required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Preferred language</label>
+            <select class="form-select" name="preferredLanguage">
+              <option value="Bengali" selected>Bengali</option>
+              <option value="English">English</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Interests</label>
+            <input class="form-control" name="interests" value="Python, AI, Web development" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Career aspiration</label>
+            <input class="form-control" name="aspirations" value="Python Developer" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Current skills</label>
+            <input class="form-control" name="skillInventory" value="Python basics, Problem solving, Communication" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Education level</label>
+            <input class="form-control" name="educationLevel" value="Higher Secondary" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Learning preferences</label>
+            <input class="form-control" name="learningPreferences" value="Project-based learning, Step-by-step guidance" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Access needs</label>
+            <input class="form-control" name="accessNeeds" value="Low-bandwidth mode" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Profile summary</label>
+            <textarea class="form-control" name="profileSummary" rows="3">Student from a small town eager to build practical digital skills.</textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary w-100 mt-4">Create account</button>
+      </form>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

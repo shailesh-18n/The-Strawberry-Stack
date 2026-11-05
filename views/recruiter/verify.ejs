@@ -1,0 +1,20 @@
+<%- include('../partials/header') %>
+<div class="card p-4">
+  <h1>Credential verification</h1>
+  <% if (verification && verification.valid) { %>
+    <div class="alert alert-success">
+      <strong>Valid credential</strong>
+    </div>
+    <p><strong>Student:</strong> <%= verification.credential.studentName %></p>
+    <p><strong>Skill:</strong> <%= verification.credential.skillName %></p>
+    <p><strong>Assessment result:</strong> <%= verification.credential.assessmentResult %></p>
+    <p><strong>Issuer:</strong> <%= verification.issuer %></p>
+    <p><strong>Evidence hash:</strong> <%= verification.hashChain %></p>
+  <% } else { %>
+    <div class="alert alert-danger">
+      <strong>Credential invalid or unavailable.</strong>
+    </div>
+  <% } %>
+  <a href="/recruiter" class="btn btn-primary">Back to recruiter dashboard</a>
+</div>
+<%- include('../partials/footer') %>

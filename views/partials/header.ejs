@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0d6efd" />
+    <title><%= title %> | VidyaChain</title>
+    <link rel="manifest" href="/public/manifest.json" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/public/css/style.css" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+      <div class="container">
+        <a class="navbar-brand" href="/">VidyaChain</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav ms-auto">
+            <% if (user) { %>
+              <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+              <li class="nav-item"><a class="nav-link" href="/career">Career Navigator</a></li>
+              <li class="nav-item"><a class="nav-link" href="/assistant">AI Tutor</a></li>
+              <li class="nav-item"><a class="nav-link" href="/assessment">Assessments</a></li>
+              <li class="nav-item"><a class="nav-link" href="/skilltrack">SkillTrack</a></li>
+              <li class="nav-item"><a class="nav-link" href="/credentials">Passport</a></li>
+              <li class="nav-item"><a class="nav-link" href="/auth/logout">Logout</a></li>
+            <% } else { %>
+              <li class="nav-item"><a class="nav-link" href="/auth/login">Login</a></li>
+              <li class="nav-item"><a class="nav-link" href="/auth/register">Register</a></li>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <main class="container py-5">

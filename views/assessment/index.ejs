@@ -1,0 +1,22 @@
+<%- include('../partials/header') %>
+<div class="mb-4">
+  <p class="text-primary fw-semibold mb-1">Practical assessment engine</p>
+  <h1>Assessment challenges</h1>
+</div>
+
+<% challenges.forEach((challenge) => { %>
+  <div class="card p-4 mb-4">
+    <h3><%= challenge.title %></h3>
+    <p><strong>Skill:</strong> <%= challenge.skill %></p>
+    <p><%= challenge.description %></p>
+    <form method="POST" action="/assessment/<%= challenge.id %>/submit">
+      <textarea class="form-control mb-3" name="code" rows="10" placeholder="Write your Python solution here"><% if (challenge.id === 'python-basics') { %>def solve(data):
+    return sum(data)
+<% } else { %>def solve(text):
+    return sum(1 for ch in text.lower() if ch in 'aeiou')
+<% } %></textarea>
+      <button class="btn btn-primary">Submit assessment</button>
+    </form>
+  </div>
+<% }) %>
+<%- include('../partials/footer') %>

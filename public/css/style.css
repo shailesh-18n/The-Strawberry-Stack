@@ -1,0 +1,44 @@
+body {
+  background: #f5f7fb;
+  color: #1f2a37;
+}
+
+.card {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+.hero {
+  background: linear-gradient(135deg, #dfe9ff 0%, #edfdf7 100%);
+  border-radius: 24px;
+  padding: 3rem 2rem;
+}
+
+.skill-pill {
+  display: inline-block;
+  background: #e9f3ff;
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  margin: 0.35rem 0.35rem 0 0;
+  font-size: 0.85rem;
+}
+
+.timeline-item {
+  border-left: 3px solid #0d6efd;
+  padding-left: 1rem;
+  margin-bottom: 1rem;
+}
+
+pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.badge-soft {
+  background: #e6fff5;
+  color: #0b7a4c;
+}
