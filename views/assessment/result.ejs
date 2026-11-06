@@ -1,27 +1,52 @@
 <%- include('../partials/header') %>
-<div class="card p-4">
-  <p class="text-primary fw-semibold mb-1">Assessment result</p>
+<section class="card p-4">
+  <p class="text-primary fw-semibold mb-1">Skill assessment result</p>
   <h1><%= result.success ? 'Assessment passed' : 'Needs revision' %></h1>
   <p class="lead"><%= result.message %></p>
-  <div class="mb-3">
-    <strong>Challenge:</strong> <%= challengeId %><br />
-    <strong>Passed tests:</strong> <%= result.totalTests ? result.passedTests + '/' + result.totalTests : '0' %>
-  </div>
-  <div class="mb-3">
-    <strong>SkillTrack:</strong> <%= progress.commitMessage %>
-  </div>
-  <% if (credential && qrDataUrl) { %>
-    <div class="row align-items-center">
-      <div class="col-md-8">
-        <h4>Credential issued</h4>
-        <p><strong>Skill:</strong> <%= credential.skillName %></p>
-        <p><strong>Issuer:</strong> <%= credential.issuer %></p>
-      </div>
-      <div class="col-md-4 text-center">
-        <img src="<%= qrDataUrl %>" alt="Credential QR code" class="img-fluid" style="max-width: 180px;" />
-      </div>
+  <p><strong>Challenge:</strong> <%= challengeId %><br>
+    <strong>Skill:</strong> <%= skillName %><br>
+    <strong>Passed tests:</strong> <%= result.passedTests || 0 %>/<%= result.totalTests || 0 %>
+  </p>
+  <% if (typeof result.score === 'number') { %>
+    <p><strong>Score:</strong> <%= result.score.toFixed(2) %>%<br>
+      <strong>Verdict:</strong> <%= result.verdict || (result.success ? 'accepted' : 'not accepted') %></p>
+  <% } %>
+  <% if (result.compileError) { %>
+    <h2 class="h5">Compiler feedback</h2>
+    <pre class="bg-light border rounded p-3 text-wrap"><%= result.compileError %></pre>
+  <% } %>
+  <% if (result.tests?.length) { %>
+    <h2 class="h4 mt-4">Test case results</h2>
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead><tr><th scope="col">Test</th><th scope="col">Result</th><th scope="col">Output</th></tr></thead>
+        <tbody>
+          <% result.tests.forEach((test) => { %>
+            <tr>
+              <th scope="row">Test <%= test.number %><%= test.hidden ? ' (hidden)' : '' %></th>
+              <td><span class="badge <%= test.passed ? 'text-bg-success' : 'text-bg-danger' %>"><%= test.verdict %></span></td>
+              <td><% if (!test.hidden) { %><pre class="mb-0 text-wrap"><%= test.output || test.error || 'No output' %></pre><% } else { %><span class="text-muted">Hidden test details are not shown.</span><% } %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
     </div>
   <% } %>
-  <a href="/skilltrack" class="btn btn-primary mt-3">View SkillTrack</a>
-</div>
+  <% if (result.success) { %>
+    <p class="alert alert-success" role="status">This skill is now recorded as assessed and will be included in your career recommendations. A SkillTrack progress record was saved.</p>
+  <% } else if (result.score !== undefined && result.retryable) { %>
+    <form method="POST" action="/assessment/python-sum/submit-code" id="coding-assessment-form" class="mt-4">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="submissionKey" value="<%= submissionKey %>" data-submission-key>
+      <input type="hidden" name="providerConsent" value="yes">
+      <label class="form-label fw-semibold" for="python-code">Retry or update your Python code</label>
+      <textarea class="form-control font-monospace mb-2" id="python-code" name="code" rows="12" maxlength="8192" required spellcheck="false"><%= submittedCode %></textarea>
+      <p class="form-text" id="code-byte-count" aria-live="polite">0 / 8192 UTF-8 bytes</p>
+      <button class="btn btn-primary" type="submit">Retry test cases</button>
+    </form>
+  <% } %>
+  <a href="/career" class="btn btn-primary">View updated career matches</a>
+  <a href="/assessment" class="btn btn-outline-primary ms-2">Back to assessments</a>
+</section>
+<% if (result.retryable) { %><script src="/public/js/assessment.js" defer></script><% } %>
 <%- include('../partials/footer') %>

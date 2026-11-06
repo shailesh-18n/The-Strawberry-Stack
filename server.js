@@ -3,6 +3,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const app = require('./app');
 const { connectDatabase } = require('./config/db');
+const { seedCatalog } = require('./services/catalogService');
 
 function getPort(value) {
   const port = Number(value || 3000);
@@ -18,7 +19,9 @@ async function start() {
 
   if (mongoUri) {
     await connectDatabase(mongoUri);
+    const seeded = await seedCatalog();
     console.info('Connected to MongoDB.');
+    console.info(`Career catalogue ready (${seeded.careers} careers, ${seeded.skills} skills).`);
   } else if (process.env.NODE_ENV === 'production') {
     throw new Error('MONGODB_URI is required in production.');
   } else {
@@ -42,9 +45,16 @@ async function start() {
         console.error('HTTP server shutdown failed.', error);
         process.exitCode = 1;
       }
-      mongoose.disconnect().catch((disconnectError) => {
-        console.error('MongoDB disconnect failed.', disconnectError);
-        process.exitCode = 1;
+      Promise.allSettled([
+        mongoose.disconnect(),
+        app.locals.sessionStore?.close(),
+      ].filter(Boolean)).then((results) => {
+        for (const result of results) {
+          if (result.status === 'rejected') {
+            console.error('Application shutdown failed.', result.reason);
+            process.exitCode = 1;
+          }
+        }
       });
     });
   };
@@ -57,9 +67,15 @@ async function start() {
 if (require.main === module) {
   start().catch(async (error) => {
     console.error('VidyaChain failed to start.', error);
-    await mongoose.disconnect().catch((disconnectError) => {
-      console.error('MongoDB disconnect failed.', disconnectError);
-    });
+    const results = await Promise.allSettled([
+      mongoose.disconnect(),
+      app.locals.sessionStore?.close(),
+    ].filter(Boolean));
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        console.error('Database shutdown failed.', result.reason);
+      }
+    }
     process.exitCode = 1;
   });
 }

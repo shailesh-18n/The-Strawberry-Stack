@@ -1,0 +1,164 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #172033;
+  background: #f5f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  line-height: 1.6;
+}
+
+a {
+  color: #0645ad;
+}
+
+.page-header,
+main {
+  width: min(100% - 2rem, 860px);
+  margin-inline: auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1.25rem;
+}
+
+.brand {
+  color: #172033;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.intro,
+.lesson,
+.sync-panel {
+  margin-block: 1rem;
+  padding: clamp(1rem, 4vw, 2rem);
+  border: 1px solid #d5dbea;
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+.intro h1 {
+  max-width: 18ch;
+  margin-block: 0.25rem 0.75rem;
+  line-height: 1.15;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #174ea6;
+  font-weight: 700;
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 650;
+}
+
+select,
+button {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #68758a;
+  border-radius: 0.4rem;
+  font: inherit;
+}
+
+button {
+  color: #fff;
+  border-color: #174ea6;
+  background: #174ea6;
+  cursor: pointer;
+}
+
+button:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 3px solid #f5a623;
+  outline-offset: 3px;
+}
+
+.notice {
+  padding: 0.75rem 1rem;
+  border-radius: 0.4rem;
+  background: #e8eef9;
+}
+
+#connection-indicator {
+  margin-right: 0.4rem;
+}
+
+#connection-indicator.is-online {
+  color: #216b35;
+}
+
+#connection-indicator.is-offline {
+  color: #a12c2c;
+}
+
+.lesson h2,
+.sync-panel h2 {
+  margin-top: 0;
+}
+
+.offline-quiz {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid #d5dbea;
+  border-radius: 0.5rem;
+}
+
+.offline-quiz legend {
+  font-weight: 650;
+}
+
+.quiz-option {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-block: 0.5rem;
+}
+
+.quiz-feedback.is-correct {
+  color: #216b35;
+}
+
+.quiz-feedback.is-incorrect {
+  color: #a12c2c;
+}
+
+.lesson-complete {
+  border-color: #34854a;
+}
+
+.lesson-complete .completion-state {
+  color: #216b35;
+  font-weight: 700;
+}
+
+.sync-panel {
+  border-left: 0.35rem solid #174ea6;
+}
+
+@media (min-width: 680px) {
+  .lesson-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .lesson {
+    margin: 0;
+  }
+}

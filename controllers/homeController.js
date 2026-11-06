@@ -1,6 +1,7 @@
-function showHome(_request, response) {
-  response.render('foundation', {
-    pageTitle: 'VidyaChain',
+function showHome(request, response) {
+  response.render('home', {
+    title: 'VidyaChain',
+    user: request.session.userId ? { id: request.session.userId } : null,
   });
 }
 

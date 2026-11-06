@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0d6efd">
+    <link rel="manifest" href="/public/manifest.json">
+    <title>Offline learning | VidyaChain</title>
+    <link rel="stylesheet" href="/public/css/offline-learning.css">
+    <script src="/public/js/app.js" defer></script>
+    <script src="/public/js/offline-learning.js" defer></script>
+  </head>
+  <body>
+    <header class="page-header">
+      <a class="brand" href="/">VidyaChain</a>
+      <a href="/dashboard">Student dashboard</a>
+    </header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">Offline-first learning</p>
+        <h1>Keep learning, even without a connection</h1>
+        <p>These short lessons and quizzes are saved on this device. Completion stays here until you sync while signed in. AI answers, assessments, and account features need an internet connection.</p>
+        <label for="language">Lesson language</label>
+        <select id="language">
+          <option value="English">English</option>
+          <option value="Bengali">বাংলা</option>
+        </select>
+        <button id="install-app" type="button" hidden>Install VidyaChain</button>
+      </section>
+      <p id="connection-status" class="notice" role="status" aria-live="polite">
+        <span id="connection-indicator" aria-hidden="true">●</span>
+        <span id="connection-label">Loading saved lessons…</span>
+      </p>
+      <section id="lessons" class="lesson-list" aria-label="Available lessons"></section>
+      <section class="sync-panel" aria-labelledby="sync-title">
+        <h2 id="sync-title">Your learning progress</h2>
+        <p id="progress-count">Completed lessons are stored on this device.</p>
+        <button id="sync-progress" type="button">Sync progress when online</button>
+        <p><a href="/auth/login">Sign in</a> to sync this device's completed lessons with your student account.</p>
+      </section>
+    </main>
+  </body>
+</html>

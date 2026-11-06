@@ -1,17 +1,76 @@
 <%- include('../partials/header') %>
-<div class="card p-4">
-  <h1 class="mb-4">Student profile</h1>
-  <div class="row g-3">
-    <div class="col-md-6"><strong>Name:</strong> <%= user.name %></div>
-    <div class="col-md-6"><strong>Email:</strong> <%= user.email %></div>
-    <div class="col-md-6"><strong>Preferred language:</strong> <%= user.preferredLanguage %></div>
-    <div class="col-md-6"><strong>Education level:</strong> <%= user.educationLevel %></div>
-    <div class="col-12"><strong>Interests:</strong> <%= (user.interests || []).join(', ') %></div>
-    <div class="col-12"><strong>Career aspirations:</strong> <%= (user.aspirations || []).join(', ') %></div>
-    <div class="col-12"><strong>Current skills:</strong> <%= (user.skillInventory || []).join(', ') %></div>
-    <div class="col-12"><strong>Learning preferences:</strong> <%= (user.learningPreferences || []).join(', ') %></div>
-    <div class="col-12"><strong>Access needs:</strong> <%= (user.accessNeeds || []).join(', ') %></div>
-    <div class="col-12"><strong>Summary:</strong> <%= user.profileSummary %></div>
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card p-4 p-md-5">
+      <p class="text-primary fw-semibold mb-2">Student profile</p>
+      <h1 class="h2 mb-2">Your learning profile</h1>
+      <p class="text-secondary mb-4">Update your language, interests, and learning preferences.</p>
+      <% if (error) { %>
+        <div class="alert alert-danger" role="alert"><%= error %></div>
+      <% } %>
+      <% if (saved) { %>
+        <div class="alert alert-success" role="status">Your profile was saved.</div>
+      <% } %>
+      <form method="POST" action="/profile">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="name">Full name</label>
+            <input class="form-control" id="name" name="name" minlength="2" maxlength="80" required value="<%= user.name %>">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" id="email" type="email" value="<%= user.email %>" disabled>
+            <div class="form-text">Email changes are not available in this phase.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="preferredLanguage">Preferred language</label>
+            <select class="form-select" id="preferredLanguage" name="preferredLanguage" required>
+              <% languages.forEach((language) => { %>
+                <option value="<%= language %>" <%= user.preferredLanguage === language ? 'selected' : '' %>><%= language %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="educationLevel">Education level</label>
+            <input class="form-control" id="educationLevel" name="educationLevel" maxlength="80" value="<%= user.educationLevel || '' %>">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="interests">Learning interests</label>
+            <input class="form-control" id="interests" name="interests" maxlength="800" value="<%= (user.interests || []).join(', ') %>">
+            <div class="form-text">Separate interests with commas.</div>
+          </div>
+          <div class="col-12">
+            <fieldset>
+              <legend class="form-label">Career interests</legend>
+              <% careerOptions.forEach((career, index) => { %>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" id="career-<%= index %>" type="checkbox" name="aspirations" value="<%= career %>" <%= (user.aspirations || []).includes(career) ? 'checked' : '' %>>
+                  <label class="form-check-label" for="career-<%= index %>"><%= career %></label>
+                </div>
+              <% }) %>
+            </fieldset>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="skillInventory">Current skills</label>
+            <input class="form-control" id="skillInventory" name="skillInventory" maxlength="800" value="<%= (user.skillInventory || []).join(', ') %>">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="learningPreferences">Learning preferences</label>
+            <input class="form-control" id="learningPreferences" name="learningPreferences" maxlength="800" value="<%= (user.learningPreferences || []).join(', ') %>">
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="accessNeeds">Access needs</label>
+            <input class="form-control" id="accessNeeds" name="accessNeeds" maxlength="800" value="<%= (user.accessNeeds || []).join(', ') %>">
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="profileSummary">About you</label>
+            <textarea class="form-control" id="profileSummary" name="profileSummary" rows="3" maxlength="1000"><%= user.profileSummary || '' %></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary mt-4" type="submit">Save profile</button>
+      </form>
+    </div>
   </div>
 </div>
 <%- include('../partials/footer') %>

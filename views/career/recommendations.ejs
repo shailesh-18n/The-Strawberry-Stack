@@ -1,53 +1,134 @@
 <%- include('../partials/header') %>
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <p class="text-primary fw-semibold mb-1">Career navigator</p>
-    <h1 class="mb-0">Skill gap analysis</h1>
-  </div>
-  <form method="POST" action="/career/recommend">
-    <button class="btn btn-primary">Refresh recommendation</button>
-  </form>
+<div class="mb-4">
+  <p class="text-primary fw-semibold mb-1">Career Navigator</p>
+  <h1 class="display-6 fw-bold">Explore your skill graph</h1>
+  <p class="lead text-secondary mb-0">
+    See how your current skills connect to career paths and what you could learn next.
+    Recommendations use your saved profile; no external AI service is used.
+  </p>
 </div>
 
-<div class="card p-4 mb-4">
-  <h3><%= recommendation.career.name %></h3>
-  <p><%= recommendation.career.description %></p>
-  <div>
-    <% (recommendation.career.skills || []).forEach((skill) => { %>
-      <span class="skill-pill"><%= skill %></span>
-    <% }) %>
+<section class="card p-4 mb-4" aria-labelledby="recommendation-title">
+  <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+    <div>
+      <p class="text-primary fw-semibold mb-1"><%= recommendation.selected ? 'Selected career path' : 'Top profile match' %></p>
+      <h2 class="h3" id="recommendation-title"><%= recommendation.career.name %></h2>
+      <p class="text-secondary"><%= recommendation.career.description %></p>
+      <p class="small">
+        <strong>Match reasons:</strong>
+        <% if (recommendation.isAspiration) { %>You selected this career goal.<% } else { %>Profile skill and interest match.<% } %>
+        <% if (recommendation.interestMatches.length) { %>
+          Matching interests: <%= recommendation.interestMatches.join(', ') %>.
+        <% } %>
+      </p>
+      <p class="mb-0"><strong>Skills already matched:</strong>
+        <%= recommendation.matchingSkills.length ? recommendation.matchingSkills.join(', ') : 'Add skills in your profile to personalize this match.' %>
+      </p>
+    </div>
+    <div class="career-fit align-self-md-start">
+      <span class="career-fit-value"><%= recommendation.completionPercent %>%</span>
+      <span class="small text-secondary">required skills in your profile</span>
+    </div>
   </div>
   <div class="mt-3">
-    <strong>Missing skills:</strong> <%= recommendation.missingSkills.length ? recommendation.missingSkills.join(', ') : 'No major gaps identified.' %>
-  </div>
-</div>
-
-<div class="row g-4">
-  <div class="col-lg-5">
-    <div class="card p-4 h-100">
-      <h4>Roadmap</h4>
-      <ol>
-        <% (recommendation.roadmap || []).forEach((step) => { %>
-          <li class="mb-2"><%= step %></li>
-        <% }) %>
-      </ol>
-    </div>
-  </div>
-  <div class="col-lg-7">
-    <div class="card p-4 h-100">
-      <h4>Available career tracks</h4>
-      <% careers.forEach((career) => { %>
-        <div class="card p-3 mb-3 bg-light">
-          <h5><%= career.name %></h5>
-          <p class="mb-2"><%= career.description %></p>
-          <div>
-            <% (career.skills || []).forEach((skill) => { %>
-              <span class="skill-pill"><%= skill %></span>
-            <% }) %>
-          </div>
-        </div>
+    <h3 class="h6">Skills to build</h3>
+    <% if (recommendation.missingSkills.length) { %>
+      <% recommendation.missingSkills.forEach((skill) => { %>
+        <span class="skill-pill skill-pill-missing"><%= skill %></span>
       <% }) %>
+    <% } else { %>
+      <p class="mb-0">Your profile lists every skill in this career track.</p>
+    <% } %>
+  </div>
+  <div class="mt-3">
+    <h3 class="h6">Suggested learning roadmap</h3>
+    <ol class="mb-0">
+      <% recommendation.roadmap.forEach((step) => { %>
+        <li class="mb-2">
+          <strong><%= step.skill %></strong>
+          <span class="badge <%= step.requiredForCareer ? 'text-bg-primary' : 'text-bg-secondary' %>">
+            <%= step.requiredForCareer ? 'Career skill' : 'Prerequisite' %>
+          </span>
+          <p class="mb-0"><%= step.activity %></p>
+        </li>
+      <% }) %>
+      <% if (!recommendation.roadmap.length) { %>
+        <li>Your profile covers all required skills in this track.</li>
+      <% } %>
+    </ol>
+  </div>
+</section>
+
+<section class="card p-4 mb-4" id="skill-graph" aria-labelledby="graph-title">
+  <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+    <div>
+      <h2 class="h4 mb-1" id="graph-title">Career and skill connections</h2>
+      <p class="text-secondary mb-0">Career links show required skills; short dashed links show prerequisites.</p>
+    </div>
+    <div class="skill-graph-legend" aria-label="Graph legend">
+      <span><i class="skill-graph-dot learned" aria-hidden="true"></i>In your profile</span>
+      <span><i class="skill-graph-dot missing" aria-hidden="true"></i>Skill to build</span>
     </div>
   </div>
-</div>
+  <div class="skill-graph-scroll" tabindex="0" aria-label="Scrollable career and skill graph">
+    <svg class="skill-graph" viewBox="0 0 <%= graph.width %> <%= graph.height %>" role="img" aria-labelledby="graph-title graph-description">
+      <desc id="graph-description">A graph of career paths connected to required skills. Green skill nodes are listed in your profile; blue nodes are skills to build.</desc>
+      <% graph.tracks.forEach((track) => { %>
+        <% track.prerequisiteEdges.forEach((edge) => { %>
+          <line class="skill-graph-edge prerequisite" x1="322" y1="<%= edge.fromY %>" x2="348" y2="<%= edge.toY %>"></line>
+        <% }) %>
+        <% track.skillNodes.forEach((skill) => { %>
+          <% if (skill.required) { %>
+            <line class="skill-graph-edge <%= skill.learned ? 'learned' : 'missing' %>" x1="278" y1="<%= track.careerNodeY %>" x2="370" y2="<%= skill.y %>"></line>
+          <% } %>
+        <% }) %>
+      <% }) %>
+      <% graph.tracks.forEach((track) => { %>
+        <g class="skill-graph-career <%= track.selected ? 'selected' : '' %>">
+          <rect x="28" y="<%= track.careerNodeY - 20 %>" width="250" height="40" rx="10"></rect>
+          <text x="42" y="<%= track.careerNodeY + 5 %>"><%= track.career.name %></text>
+        </g>
+        <% track.skillNodes.forEach((skill) => { %>
+          <g class="skill-graph-skill <%= skill.learned ? 'learned' : 'missing' %>">
+            <circle cx="370" cy="<%= skill.y %>" r="<%= skill.required ? 9 : 6 %>"></circle>
+            <text x="392" y="<%= skill.y + 5 %>"><%= skill.name %></text>
+          </g>
+        <% }) %>
+      <% }) %>
+    </svg>
+  </div>
+</section>
+
+<section aria-labelledby="tracks-title">
+  <h2 class="h4 mb-3" id="tracks-title">Career paths</h2>
+  <div class="row g-3">
+    <% tracks.forEach((track) => { %>
+      <div class="col-12 col-lg-4">
+        <article class="card career-track-card h-100 p-4 <%= track.selected ? 'career-track-selected' : '' %>">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <h3 class="h5"><%= track.career.name %></h3>
+            <% if (track.selected) { %>
+              <span class="badge text-bg-primary">Selected</span>
+            <% } else if (track === recommendation) { %>
+              <span class="badge text-bg-success">Top match</span>
+            <% } %>
+          </div>
+          <p class="text-secondary"><%= track.career.description %></p>
+          <% if (track.interestMatches.length) { %>
+            <p class="small"><strong>Matched interests:</strong> <%= track.interestMatches.join(', ') %></p>
+          <% } %>
+          <p class="small mb-2"><strong><%= track.completionPercent %>%</strong> of listed skills in your profile</p>
+          <div class="progress mb-3" role="progressbar" aria-label="<%= track.career.name %> skill match" aria-valuenow="<%= track.completionPercent %>" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar" style="width: <%= track.completionPercent %>%"></div>
+          </div>
+          <p class="small"><strong>Already listed:</strong> <%= track.matchingSkills.join(', ') || 'None yet' %></p>
+          <p class="small"><strong>To build:</strong> <%= track.missingSkills.join(', ') || 'None' %></p>
+          <a class="btn btn-outline-primary mt-auto" href="/career?career=<%= encodeURIComponent(track.career.slug) %>">
+            <%= track.selected ? 'Viewing this path' : 'Explore this path' %>
+          </a>
+        </article>
+      </div>
+    <% }) %>
+  </div>
+</section>
 <%- include('../partials/footer') %>

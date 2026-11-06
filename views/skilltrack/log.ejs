@@ -1,21 +1,124 @@
 <%- include('../partials/header') %>
 <div class="mb-4">
   <p class="text-primary fw-semibold mb-1">SkillTrack</p>
-  <h1>Learning history</h1>
+  <h1>Learning progress</h1>
+  <p class="lead">Record milestones and review progress from your assessments and offline lessons.</p>
 </div>
 
-<div class="card p-4">
-  <% if (records.length) { %>
-    <% records.forEach((record) => { %>
-      <div class="timeline-item">
-        <h5><%= record.commitMessage %></h5>
-        <p class="mb-1"><strong>Skill:</strong> <%= record.skillName %></p>
-        <p class="mb-1"><strong>Change:</strong> <%= record.changeSummary %></p>
-        <small class="text-muted"><%= new Date(record.createdAt).toLocaleString() %></small>
+<% if (saved) { %>
+  <div class="alert alert-success" role="status">Your learning milestone was saved.</div>
+<% } %>
+<% if (error) { %>
+  <div class="alert alert-danger" role="alert"><%= error %></div>
+<% } %>
+
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-4">
+    <section class="card h-100 p-3">
+      <h2 class="h6">Milestones logged</h2>
+      <p class="display-6 mb-0"><%= entries.length %></p>
+    </section>
+  </div>
+  <div class="col-12 col-md-4">
+    <section class="card h-100 p-3">
+      <h2 class="h6">Coding assessment records</h2>
+      <p class="display-6 mb-0"><%= assessmentProgress.length %></p>
+    </section>
+  </div>
+  <div class="col-12 col-md-4">
+    <section class="card h-100 p-3">
+      <h2 class="h6">Offline lessons completed</h2>
+      <p class="display-6 mb-0"><%= lessonProgress.length %></p>
+    </section>
+  </div>
+</div>
+
+<section class="card p-4 mb-4" aria-labelledby="milestone-form-title">
+  <h2 class="h4" id="milestone-form-title">Log a learning milestone</h2>
+  <p class="text-muted">These level updates are self-reported learning notes, not a verified credential.</p>
+  <form method="POST" action="/skilltrack" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="skill-id">Skill</label>
+        <select class="form-select" id="skill-id" name="skillId" required>
+          <option value="">Choose a skill</option>
+          <% skills.forEach((skill) => { %>
+            <option value="<%= skill._id %>" <%= form.skillId === String(skill._id) ? 'selected' : '' %>><%= skill.name %></option>
+          <% }) %>
+        </select>
       </div>
-    <% }) %>
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="current-level">Current level</label>
+        <select class="form-select" id="current-level" name="currentLevel" required>
+          <option value="">Choose a level</option>
+          <% levels.forEach((level) => { %>
+            <option value="<%= level %>" <%= form.currentLevel === level ? 'selected' : '' %>><%= level.charAt(0).toUpperCase() + level.slice(1) %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="commit-message">Milestone title</label>
+        <input class="form-control" id="commit-message" name="commitMessage" minlength="3" maxlength="100" required value="<%= form.commitMessage || '' %>" placeholder="For example: Built my first responsive page">
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="change-summary">What changed?</label>
+        <textarea class="form-control" id="change-summary" name="changeSummary" rows="3" minlength="3" maxlength="500" required><%= form.changeSummary || '' %></textarea>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-3" type="submit">Save milestone</button>
+  </form>
+</section>
+
+<section class="card p-4 mb-4" aria-labelledby="milestone-history-title">
+  <h2 class="h4" id="milestone-history-title">Your milestones</h2>
+  <% if (entries.length) { %>
+    <ol class="list-group list-group-numbered">
+      <% entries.forEach((entry) => { %>
+        <li class="list-group-item">
+          <h3 class="h6 mb-1"><%= entry.commitMessage %></h3>
+          <p class="mb-1"><strong><%= entry.skill.name %>:</strong> <%= entry.previousLevel %> to <%= entry.currentLevel %></p>
+          <p class="mb-1"><%= entry.changeSummary %></p>
+          <time class="small text-muted" datetime="<%= entry.createdAt.toISOString() %>"><%= entry.createdAt.toLocaleString() %></time>
+        </li>
+      <% }) %>
+    </ol>
+    <% if (entries.length === 50) { %><p class="small text-muted mt-2 mb-0">Showing the latest 50 milestones.</p><% } %>
   <% } else { %>
-    <p class="text-muted">No history yet. Complete an assessment to generate a milestone.</p>
+    <p class="text-muted mb-0">No milestones yet. Add a learning update above to start your history.</p>
   <% } %>
+</section>
+
+<div class="row g-4">
+  <div class="col-12 col-lg-6">
+    <section class="card h-100 p-4" aria-labelledby="assessment-history-title">
+      <h2 class="h4" id="assessment-history-title">Coding assessment progress</h2>
+      <% if (assessmentProgress.length) { %>
+        <ul class="list-group list-group-flush">
+          <% assessmentProgress.forEach((record) => { %>
+            <li class="list-group-item px-0">
+              <strong><%= record.skill.name %></strong> — <%= record.passed ? 'Passed' : 'Needs practice' %> (<%= record.score %>%)
+              <time class="d-block small text-muted" datetime="<%= record.createdAt.toISOString() %>"><%= record.createdAt.toLocaleString() %></time>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %><p class="text-muted mb-0">Coding assessment results will appear here.</p><% } %>
+    </section>
+  </div>
+  <div class="col-12 col-lg-6">
+    <section class="card h-100 p-4" aria-labelledby="lesson-history-title">
+      <h2 class="h4" id="lesson-history-title">Offline lesson progress</h2>
+      <% if (lessonProgress.length) { %>
+        <ul class="list-group list-group-flush">
+          <% lessonProgress.forEach((record) => { %>
+            <li class="list-group-item px-0">
+              <strong><%= record.skill.name %></strong> completed
+              <time class="d-block small text-muted" datetime="<%= record.completedAt.toISOString() %>"><%= record.completedAt.toLocaleString() %></time>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %><p class="text-muted mb-0">Synced offline lesson completions will appear here.</p><% } %>
+    </section>
+  </div>
 </div>
 <%- include('../partials/footer') %>

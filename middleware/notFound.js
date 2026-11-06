@@ -1,6 +1,9 @@
 function notFound(_request, response) {
   response.status(404).render('errors/404', {
-    pageTitle: 'Page not found',
+    title: 'Page not found',
+    user: null,
+    csrfToken: '',
+    currentYear: new Date().getFullYear(),
   });
 }
 

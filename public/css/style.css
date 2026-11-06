@@ -42,3 +42,127 @@ pre {
   background: #e6fff5;
   color: #0b7a4c;
 }
+
+.career-fit {
+  display: flex;
+  min-width: 9rem;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.career-fit-value {
+  color: #0d6efd;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.skill-pill-missing {
+  background: #edf2ff;
+  color: #234a9b;
+}
+
+.skill-graph-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.skill-graph-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.skill-graph-dot,
+.skill-graph-skill circle {
+  display: inline-block;
+  fill: #0d6efd;
+  height: 0.75rem;
+  width: 0.75rem;
+}
+
+.skill-graph-dot {
+  border-radius: 50%;
+}
+
+.skill-graph-dot.learned,
+.skill-graph-skill.learned circle {
+  background: #198754;
+  fill: #198754;
+}
+
+.skill-graph-dot.missing {
+  background: #0d6efd;
+}
+
+.skill-graph-scroll {
+  max-width: 100%;
+  overflow: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.skill-graph {
+  display: block;
+  height: auto;
+  min-width: 48rem;
+  width: 100%;
+}
+
+.skill-graph-edge {
+  stroke: #b7c1d1;
+  stroke-width: 2;
+}
+
+.skill-graph-edge.learned {
+  stroke: #198754;
+}
+
+.skill-graph-edge.prerequisite {
+  stroke: #7c3aed;
+  stroke-dasharray: 4 3;
+  stroke-width: 1.5;
+}
+
+.skill-graph-career rect {
+  fill: #f3f6fb;
+  stroke: #64748b;
+  stroke-width: 1.5;
+}
+
+.skill-graph-career.selected rect {
+  fill: #e9f1ff;
+  stroke: #0d6efd;
+  stroke-width: 2.5;
+}
+
+.skill-graph-career text,
+.skill-graph-skill text {
+  fill: #1f2a37;
+  font-size: 16px;
+}
+
+.skill-graph-skill circle {
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.skill-graph-skill.learned circle {
+  fill: #198754;
+}
+
+.career-track-selected {
+  outline: 2px solid #0d6efd;
+  outline-offset: 1px;
+}
+
+@media (max-width: 575.98px) {
+  .career-fit {
+    min-width: 0;
+  }
+
+  .skill-graph {
+    min-width: 42rem;
+  }
+}

@@ -1,89 +1,131 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { getUserByEmail, createUser } = require('../utils/store');
+const User = require('../models/User');
+const {
+  CAREER_OPTIONS,
+  LANGUAGES,
+  buildStudentProfile,
+  isValidEmail,
+  normalizeEmail,
+  validateStudentProfile,
+} = require('../utils/studentProfile');
 
 const router = express.Router();
 
-router.get('/login', (req, res) => {
-  res.render('auth/login', { title: 'Login', error: null });
-});
-
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  const user = getUserByEmail(email);
-
-  if (!user) {
-    return res.render('auth/login', { title: 'Login', error: 'No account matches that email.' });
-  }
-
-  const valid = await bcrypt.compare(password, user.passwordHash);
-
-  if (!valid) {
-    return res.render('auth/login', { title: 'Login', error: 'Incorrect password.' });
-  }
-
-  req.session.user = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    preferredLanguage: user.preferredLanguage,
-    interests: user.interests,
-    skillInventory: user.skillInventory,
-    aspirations: user.aspirations,
-  };
-
-  const redirectTo = req.session.returnTo || '/dashboard';
-  delete req.session.returnTo;
-  res.redirect(redirectTo);
-});
-
-router.get('/register', (req, res) => {
-  res.render('auth/register', { title: 'Register', error: null });
-});
-
-router.post('/register', async (req, res) => {
-  const { name, email, password, preferredLanguage, interests, aspirations, skillInventory, educationLevel, learningPreferences, accessNeeds, profileSummary } = req.body;
-
-  if (!name || !email || !password) {
-    return res.render('auth/register', { title: 'Register', error: 'Name, email, and password are required.' });
-  }
-
-  const existing = getUserByEmail(email);
-  if (existing) {
-    return res.render('auth/register', { title: 'Register', error: 'An account with that email already exists.' });
-  }
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  const user = createUser({
-    name,
-    email,
-    passwordHash,
-    preferredLanguage,
-    interests: (interests || '').split(',').map((item) => item.trim()).filter(Boolean),
-    aspirations: (aspirations || '').split(',').map((item) => item.trim()).filter(Boolean),
-    skillInventory: (skillInventory || '').split(',').map((item) => item.trim()).filter(Boolean),
-    educationLevel,
-    learningPreferences: (learningPreferences || '').split(',').map((item) => item.trim()).filter(Boolean),
-    accessNeeds: (accessNeeds || '').split(',').map((item) => item.trim()).filter(Boolean),
-    profileSummary,
+function regenerateSession(request) {
+  return new Promise((resolve, reject) => {
+    request.session.regenerate((error) => (error ? reject(error) : resolve()));
   });
+}
 
-  req.session.user = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    preferredLanguage: user.preferredLanguage,
-    interests: user.interests,
-    skillInventory: user.skillInventory,
-    aspirations: user.aspirations,
-  };
+function saveSession(request) {
+  return new Promise((resolve, reject) => {
+    request.session.save((error) => (error ? reject(error) : resolve()));
+  });
+}
 
-  res.redirect('/dashboard');
+function renderRegistration(response, { error = null, formData = {} } = {}, status = 200) {
+  return response.status(status).render('auth/register', {
+    title: 'Create your student profile',
+    error,
+    formData,
+    languages: LANGUAGES,
+    careerOptions: CAREER_OPTIONS,
+  });
+}
+
+router.get('/register', (_request, response) => renderRegistration(response));
+
+router.post('/register', async (request, response, next) => {
+  const email = normalizeEmail(request.body.email);
+  const formData = { ...buildStudentProfile(request.body), email };
+  const password = typeof request.body.password === 'string' ? request.body.password : '';
+
+  if (!isValidEmail(email)) {
+    return renderRegistration(response, { error: 'Enter a valid email address.', formData }, 400);
+  }
+  if (password.length < 10 || Buffer.byteLength(password, 'utf8') > 72) {
+    return renderRegistration(response, { error: 'Choose a password with at least 10 characters and no more than 72 UTF-8 bytes.', formData }, 400);
+  }
+  const profileError = validateStudentProfile(formData);
+  if (profileError) {
+    return renderRegistration(response, { error: profileError, formData }, 400);
+  }
+
+  try {
+    const existing = await User.exists({ email });
+    if (existing) {
+      return renderRegistration(response, { error: 'An account with that email already exists.', formData }, 409);
+    }
+
+    const user = await User.create({
+      ...formData,
+      email,
+      passwordHash: await bcrypt.hash(password, 12),
+    });
+
+    await regenerateSession(request);
+    request.session.userId = user.id;
+    await saveSession(request);
+    return response.redirect(303, '/dashboard');
+  } catch (error) {
+    if (error.code === 11000) {
+      return renderRegistration(response, { error: 'An account with that email already exists.', formData }, 409);
+    }
+    return next(error);
+  }
 });
 
-router.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/');
+router.get('/login', (_request, response) => {
+  response.render('auth/login', {
+    title: 'Login',
+    error: null,
+    email: '',
+  });
+});
+
+router.post('/login', async (request, response, next) => {
+  const email = normalizeEmail(request.body.email);
+  const password = typeof request.body.password === 'string' ? request.body.password : '';
+
+  try {
+    const user = await User.findOne({ email }).select('+passwordHash');
+    const valid = user
+      && Buffer.byteLength(password, 'utf8') <= 72
+      && await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      return response.status(401).render('auth/login', {
+        title: 'Login',
+        error: 'Email or password is incorrect.',
+        email,
+      });
+    }
+
+    const returnTo = request.session.returnTo;
+    await regenerateSession(request);
+    request.session.userId = user.id;
+    if (typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+      request.session.returnTo = returnTo;
+    }
+    await saveSession(request);
+    const redirectTo = request.session.returnTo || '/dashboard';
+    delete request.session.returnTo;
+    return response.redirect(303, redirectTo);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post('/logout', (request, response, next) => {
+  request.session.destroy((error) => {
+    if (error) return next(error);
+    response.clearCookie('vidyachain.sid', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    });
+    return response.redirect(303, '/');
   });
 });
 

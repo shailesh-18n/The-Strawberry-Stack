@@ -2,58 +2,66 @@
 
 ## Product problem and MVP
 
-VidyaChain is intended to help students, especially learners who benefit from
-step-by-step and vernacular guidance, connect career goals to practical skills.
-The MVP aims to make that path understandable and measurable: learners describe
-their interests and goals, receive a career roadmap, practice skills, track
-progress, and share evidence of achievement.
+VidyaChain helps students connect learning interests and career goals. The MVP
+aims to make learning progress understandable: students create a profile,
+identify preferred language and career interests, then follow a skill-building
+journey. The implemented product slices are student registration, onboarding, profile
+updates, a profile-driven Career Navigator with skill gaps and a skill graph,
+structured skill assessments, a vernacular learning assistant, and offline
+foundational lessons with local progress and authenticated synchronization.
+Credentials and recruiter verification remain outside the completed phases.
 
-The MVP product journey is:
+The planned user journey is:
 
-1. A learner visits the public landing page and creates a student profile with
-   their interests, aspirations, education, preferred language, and learning
-   or access needs.
-2. The learner reviews a suggested career path, the skills needed for it, and
-   an ordered learning roadmap.
-3. The learner gets guidance while working through the roadmap and completes
-   practical skill assessments.
-4. Assessment outcomes update a learner-visible progress history; eligible
-   achievements can be issued as credentials.
-5. A learner shares a credential with a recruiter or other verifier, who checks
-   its issuer and integrity.
-
-This is the planned product journey, not a claim that those workflows are
-currently operational. The deployed Phase 1 scope is the application
-foundation; Phase 2 is student interface and onboarding.
+1. A learner visits the landing page and creates an account with their name,
+   email, and password.
+2. During registration the learner selects Bengali or English, learning
+   interests, career aspirations, and optional education, skills, learning
+   preferences, access needs, and profile summary.
+3. The learner views a dashboard and can update the profile at any time.
+4. The learner explores career paths ranked against profile interests,
+   aspirations, and listed skills, and reviews a suggested learning roadmap.
+5. The learner can check a skill with a guided assessment, then ask for
+   Bengali or English learning guidance based on the saved profile.
+6. The learner downloads foundational lessons, studies offline, and syncs
+   completed lesson progress when signed in and connected.
 
 ## Feature breakdown
 
-| Area | Planned capability | Current status |
+| Area | Capability | Current status |
 | --- | --- | --- |
-| Project foundation | Express server, EJS views, Bootstrap styling, configuration, security boundary, health checks | Implemented and tested in Phase 1 |
-| Student onboarding | Student registration/profile and onboarding flow | Planned for Phase 2 |
-| Career navigation | Recommendations, skill gaps, and learning roadmap | Existing draft only; not mounted |
-| Learning guidance | Contextual, language-aware learner guidance | Existing draft only; not mounted; no external AI integration verified |
-| Skill assessment | Practical challenges and recorded results | Existing draft only; not mounted |
-| Progress tracking | Learner-visible milestones and history | Existing draft only; not mounted |
+| Project foundation | Express server, EJS, Bootstrap styling, configuration, security middleware, health checks | Implemented and tested in Phase 1 |
+| Student onboarding | Registration, login, language/career-interest selection, persistent profile create/update | Implemented and tested in Phase 2 |
+| Career navigation | Structured ranking, career focus, skill gaps, dependency-aware roadmap, responsive graph | Implemented and tested in Phase 3 |
+| Learning guidance | Profile-context Bengali/English assistant, optional Gemini/OpenAI-compatible provider and offline guidance | Implemented and live-verified with OpenRouter in Bengali and English |
+| Skill assessment | Fixed-answer questions, persisted attempts, assessed skill references | Implemented and tested in Phase 3 |
+| Practical coding assessment | Fixed Python list-sum challenge, OnlineCompiler.io multi-case execution, bounded result persistence and SkillTrack record | Managed provider integration live-verified against four cases; no VidyaChain-hosted gVisor runner; provider claims not independently audited |
+| Offline learning | Cached bilingual HTML/CSS/JavaScript lessons and quizzes, IndexedDB completion queue, authenticated conflict-aware sync | Verified in network-offline Chromium and installed/ launched as a native Chrome desktop PWA |
+| Hosting | Render Node web service, MongoDB Atlas, separate Oracle Cloud runner | Render Blueprint prepared; no cloud service or runner is deployed |
+| SkillTrack | Student-owned self-reported skill milestones plus coding-assessment and offline-lesson progress history | Implemented and tested in Phase 7; milestone levels are not credentials |
 | Credentials | Signed achievement records and public verification | Existing draft only; not mounted |
 | Recruiter tools | Credential inspection and verification | Existing draft only; not mounted |
 
-The feature inventory is grounded in the existing route and view drafts. Product
-behavior, sequencing beyond Phase 2, and integrations remain subject to the
-master prompt and future phase approval.
-
-## Phase 1 request flow
+## Student and Career Navigator request flow
 
 ```text
 Browser
   -> Express app (app.js)
-     -> Security middleware (Helmet CSP + rate limiter)
-     -> Phase 1 routes
-        -> Home controller -> EJS foundation view and shared site partials
-        -> Health controller -> JSON
-     -> Static files (/public/*)
-  -> MongoDB connection managed by Mongoose (config/db.js)
+     -> Helmet CSP + request rate limiter + body limits
+     -> EJS static assets
+     -> express-session with MongoDB store
+     -> session-bound CSRF validation for state-changing requests
+     -> mounted routes
+        -> Landing page
+        -> Registration/login/logout -> bcrypt + Mongoose User model
+        -> Student dashboard/profile -> authenticated Mongoose User
+        -> Authenticated career navigator -> deterministic ranking + SVG graph -> authenticated Mongoose User
+        -> Skill assessments -> fixed-answer or OnlineCompiler.io result -> StudentAssessment + SkillTrackProgress -> assessed skill refs on pass
+        -> SkillTrack -> SkillTrackEntry self-reports + SkillTrackProgress + LearningProgress history (student-scoped)
+        -> Vernacular assistant -> profile context -> configured AI endpoint or offline guidance
+        -> Offline lessons/quizzes -> service-worker cache + IndexedDB queue -> authenticated sync/merge -> LearningProgress
+        -> Health probes
+  -> MongoDB connection and reference catalogue seeding (config/db.js, catalogService.js)
 ```
 
 ## Structure
@@ -65,71 +73,110 @@ config/
   db.js
 controllers/
   homeController.js
-  healthController.js
 middleware/
-  security.js
+  csrfProtection.js
   errorHandler.js
   notFound.js
-models/             # reserved for confirmed Mongoose schemas
+  requireStudentAuth.js
+  security.js
+models/
+  Career.js
+  LearningProgress.js
+  Skill.js
+  StudentAssessment.js
+  User.js
 routes/
-  index.js
+  assessment.js
+  auth.js
   health.js
-  app.js            # existing feature routes; not mounted in Phase 1
-  auth.js           # existing feature routes; not mounted in Phase 1
-services/           # existing feature-oriented drafts
-utils/              # existing demo store
+  index.js
+  student.js
+  career.js
+  learning.js
+  app.js            # existing later-phase draft; not mounted
+services/           # existing later-phase feature drafts
+  offlineLearningService.js
+utils/
+  studentProfile.js # profile parsing and validation
+  store.js          # legacy in-memory feature drafts only
 views/
-  foundation.ejs
-  partials/
-    site-header.ejs
-    site-footer.ejs
+  auth/
   errors/
+  partials/
+  student/
 public/
   css/
+    offline-learning.css
   js/
+    offline-learning.js
+  offline-learning.html
   manifest.json
   sw.js
 test/
 ```
 
-Controllers own HTTP request/response behavior. Routes map URLs to controllers.
-Services will hold reusable business logic once product requirements are
-confirmed; models will define Mongoose schemas in the corresponding product
-phase. `app.js` composes middleware and Phase 1 routes without opening network
-or database connections. `server.js` owns startup, database connection,
-listener lifecycle, and shutdown.
-
-## Runtime and trust boundaries
-
-- Express serves the Phase 1 EJS app and static assets from `public/` under `/public`.
-- Helmet applies browser security headers with a Content Security Policy restricted to the app and the jsDelivr Bootstrap CDN.
-- Express rate limiting and 10 KB JSON/form body limits apply at the app boundary.
-- MongoDB is accessed through Mongoose. Database readiness is separate from process liveness.
-- Configuration is read from environment variables; `.env` is local-only and excluded from version control.
-- Existing feature routes, authentication, and in-memory demo services are not wired into the Phase 1 app.
+`app.js` composes middleware and routes without opening the primary Mongoose
+connection. `server.js` owns startup, database connection, catalogue seeding,
+listener lifecycle, and shutdown. Mongoose stores structured career and skill
+records; the career service deterministically ranks them against the student
+profile. The assistant sends only preferred language, career/skill context,
+and the learner's question to a configured provider. Without provider
+configuration it uses a clearly labeled local response. Express sessions use
+a MongoDB-backed store when `MONGODB_URI` is configured.
 
 ## Database design
 
-MongoDB with Mongoose is the planned persistence layer. The current foundation
-opens a Mongoose connection when `MONGODB_URI` is configured, but defines no
-product models or collections. The conceptual entities and relationships are
-listed in [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md); schemas, indexes, validation,
-and retention rules must be confirmed before product persistence is added.
+MongoDB with Mongoose stores student accounts in `users`, career catalogue
+records in `careers`, structured skills and prerequisite references in
+`skills`, assessment attempts in `studentassessments`, offline completions in
+`learningprogress`, and sessions in `sessions`. Career recommendations and
+assistant conversations are computed per request and are not persisted. See
+[DATABASE_SCHEMA.md](DATABASE_SCHEMA.md).
 
-## Security design
+## Security design and runtime boundaries
 
-The foundation applies Helmet security headers and a restrictive Content
-Security Policy, rate-limits requests, limits JSON/form bodies to 10 KB, masks
-unexpected HTTP errors, and keeps secrets in environment configuration.
-Production deployment must use HTTPS and a strong secret-management process.
-
-Before student accounts are implemented, authentication must use a secure
-password hash, protected sessions, authorization checks, and CSRF protection
-for state-changing browser forms. Credential signing keys must remain private
-and outside source control. Any assessment code execution must be isolated from
-the Express process with explicit resource limits. Those product controls are
-design requirements, not implemented Phase 1 features.
+- Helmet applies browser security headers with a Content Security Policy that
+  allows only the app and the Bootstrap CDN.
+- Express rate-limits requests and limits JSON/form bodies to 10 KB.
+- Student passwords are hashed with bcrypt; the password hash is excluded from
+  normal Mongoose query selection and is never rendered.
+- Registration/login regenerate the session ID. Session cookies are HTTP-only,
+  same-site, and secure in production. Configured sessions are persisted in
+  MongoDB.
+- State-changing browser requests require a cryptographically random,
+  session-bound CSRF token checked with a timing-safe comparison.
+- `SESSION_SECRET` must contain at least 32 characters. Keep `.env` and
+  generated credential signing keys out of Git.
+- MongoDB Atlas SRV resolution uses the operating system's DNS configuration
+  by default. An optional, validated comma-separated `DNS_SERVERS` setting can
+  select resolver IPs when a network's default resolver cannot resolve Atlas
+  records. Keep resolver choices in ignored `.env`, not application source.
+- Fixed-answer skill assessments remain available. The coding assessment
+  sends consented source to OnlineCompiler.io; the web process does not run
+  student code. This is a managed-provider integration, not a VidyaChain-hosted
+  gVisor runner, and provider claims are not independently audited.
+- The Phase 6 self-hosted gVisor proposal and security test matrix are retained
+  in [PHASE6_EXECUTION_ARCHITECTURE.md](PHASE6_EXECUTION_ARCHITECTURE.md).
+  Render/Oracle deployment, a separate runner, and app-to-runner communication
+  are not implemented or verified.
+- Render Free cannot receive private-network connections. A future Oracle
+  runner must initiate an authenticated outbound HTTPS connection to an
+  application broker. No broker/channel has been implemented or verified;
+  deployment constraints are in [DEPLOYMENT.md](DEPLOYMENT.md).
+- AI provider credentials are server-side environment variables and are never
+  included in rendered HTML or provider request context.
+- The service worker caches only the public offline lesson shell, its local
+  assets, and the public lesson pack. Authenticated pages and progress API
+  responses are never written to Cache Storage. Offline completion records
+  contain only lesson slugs in IndexedDB; sync requires authentication and
+  CSRF. A completion-wins merge preserves updates made concurrently on another
+  device. AI generation, guided assessments, account features, and cloud sync
+  remain online-only.
 
 ## Deferred design
 
-Authentication, authorization, domain entities, persistence semantics, and business APIs are deferred to their approved product phases. The feature drafts are not wired into Phase 1. Keep assessment code execution out of the Express process; the existing draft uses a separate subprocess.
+Credential and recruiter APIs remain deferred.
+The current offline lesson pack contains three foundational skills;
+assessments and AI requests remain online-only. Career recommendations are
+deterministic; the assistant only makes a provider call when all provider
+settings are configured.

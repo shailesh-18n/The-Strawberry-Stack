@@ -1,8 +1,33 @@
 <%- include('../partials/header') %>
 <div class="mb-4">
-  <p class="text-primary fw-semibold mb-1">Practical assessment engine</p>
-  <h1>Assessment challenges</h1>
+  <p class="text-primary fw-semibold mb-1">Skill assessment</p>
+  <h1>Check a skill with a challenge</h1>
 </div>
+
+<section class="card p-4 mb-4" aria-labelledby="coding-challenge-title">
+  <p class="text-primary fw-semibold mb-1">Practical Python assessment</p>
+  <h2 class="h3" id="coding-challenge-title"><%= codingChallenge.title %></h2>
+  <p><strong>Skill:</strong> <%= codingChallenge.skill %></p>
+  <p><%= codingChallenge.statement %></p>
+  <p class="small text-muted">Read N, then N space-separated integers. Print their sum.</p>
+  <div class="alert alert-info" role="note">
+    Your code is sent to OnlineCompiler.io for execution in its isolated, network-disabled sandbox.
+    The provider stores submitted code and test results for up to 90 days. Do not include personal
+    or sensitive information. The API key is used only by the server.
+  </div>
+  <form method="POST" action="/assessment/<%= codingChallenge.id %>/submit-code" id="coding-assessment-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="submissionKey" value="<%= codingSubmissionKey %>" data-submission-key>
+    <label class="form-label fw-semibold" for="python-code">Python code</label>
+    <textarea class="form-control font-monospace mb-2" id="python-code" name="code" rows="12" maxlength="8192" required spellcheck="false"><%= codingChallenge.starterCode %></textarea>
+    <p class="form-text" id="code-byte-count" aria-live="polite">0 / 8192 UTF-8 bytes</p>
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" id="provider-consent" name="providerConsent" value="yes" required>
+      <label class="form-check-label" for="provider-consent">I agree to send this code to OnlineCompiler.io for assessment.</label>
+    </div>
+    <button class="btn btn-primary" type="submit">Run test cases</button>
+  </form>
+</section>
 
 <% challenges.forEach((challenge) => { %>
   <div class="card p-4 mb-4">
@@ -10,13 +35,31 @@
     <p><strong>Skill:</strong> <%= challenge.skill %></p>
     <p><%= challenge.description %></p>
     <form method="POST" action="/assessment/<%= challenge.id %>/submit">
-      <textarea class="form-control mb-3" name="code" rows="10" placeholder="Write your Python solution here"><% if (challenge.id === 'python-basics') { %>def solve(data):
-    return sum(data)
-<% } else { %>def solve(text):
-    return sum(1 for ch in text.lower() if ch in 'aeiou')
-<% } %></textarea>
-      <button class="btn btn-primary">Submit assessment</button>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% challenge.questions.forEach((question, questionIndex) => { %>
+        <fieldset class="mb-3">
+          <legend class="h6"><%= question.prompt %></legend>
+          <% question.options.forEach((option, optionIndex) => { %>
+            <div class="form-check">
+              <input class="form-check-input" id="<%= challenge.id %>-<%= questionIndex %>-<%= optionIndex %>" type="radio" name="answer_<%= questionIndex %>" value="<%= option.value %>" required>
+              <label class="form-check-label" for="<%= challenge.id %>-<%= questionIndex %>-<%= optionIndex %>"><%= option.label %></label>
+            </div>
+          <% }) %>
+        </fieldset>
+      <% }) %>
+      <button class="btn btn-primary" type="submit">Submit assessment</button>
     </form>
   </div>
 <% }) %>
+<% if (attempts.length) { %>
+  <section class="card p-4" aria-labelledby="attempts-title">
+    <h2 class="h4" id="attempts-title">Recent attempts</h2>
+    <ul class="mb-0">
+      <% attempts.forEach((attempt) => { %>
+        <li><%= attempt.skill.name %> — <%= attempt.passed ? 'Passed' : 'Needs practice' %> (<%= attempt.passedTests %>/<%= attempt.totalTests %>)</li>
+      <% }) %>
+    </ul>
+  </section>
+<% } %>
+<script src="/public/js/assessment.js" defer></script>
 <%- include('../partials/footer') %>

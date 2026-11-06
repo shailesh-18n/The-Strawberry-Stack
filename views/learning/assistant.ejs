@@ -1,25 +1,43 @@
 <%- include('../partials/header') %>
+<div class="mb-4">
+  <p class="text-primary fw-semibold mb-1">Vernacular learning assistant</p>
+  <h1 class="display-6 fw-bold">Ask about your next learning step</h1>
+  <p class="lead text-secondary">Guidance uses your selected language and saved career/skill profile.</p>
+</div>
 <div class="row g-4">
   <div class="col-lg-6">
-    <div class="card p-4 h-100">
-      <h2 class="mb-3">Vernacular AI learning assistant</h2>
+    <section class="card p-4 h-100" aria-labelledby="question-title">
+      <h2 class="h4 mb-3" id="question-title">Your question</h2>
+      <% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
       <form method="POST" action="/assistant">
-        <div class="mb-3">
-          <label class="form-label">Ask a question in <%= user.preferredLanguage || 'Bengali' %></label>
-          <textarea class="form-control" name="question" rows="4" placeholder="What should I learn next?"><%= question %></textarea>
-        </div>
-        <button class="btn btn-primary">Ask assistant</button>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label class="form-label" for="question">Ask in <%= user.preferredLanguage %></label>
+        <textarea class="form-control mb-3" id="question" name="question" rows="5" maxlength="1000" required><%= question %></textarea>
+        <button class="btn btn-primary" type="submit">Get guidance</button>
       </form>
-    </div>
+    </section>
   </div>
   <div class="col-lg-6">
-    <div class="card p-4 h-100">
-      <h3>Answer</h3>
-      <div class="alert alert-info">
-        <strong>Language:</strong> <%= response.language %>
-      </div>
-      <p><%= response.answer %></p>
-    </div>
+    <section class="card p-4 h-100" aria-labelledby="answer-title">
+      <h2 class="h4" id="answer-title">Guidance</h2>
+      <% if (answer) { %>
+        <% if (answer.mode === 'ai') { %>
+          <div class="alert alert-info" role="status">AI response · <%= answer.language %>. Review suggestions and verify important information.</div>
+        <% } else { %>
+          <div class="alert alert-secondary" role="status">Offline profile-based guidance · <%= answer.language %>. No AI service is configured.</div>
+        <% } %>
+        <p class="assistant-answer"><%= answer.answer %></p>
+      <% } else { %>
+        <p class="text-secondary">Ask a question to get guidance grounded in your current profile.</p>
+      <% } %>
+      <% if (navigator.recommendation) { %>
+        <hr>
+        <p class="mb-1"><strong>Current career focus:</strong> <%= navigator.recommendation.career.name %></p>
+        <p class="mb-0"><strong>Next skills:</strong>
+          <%= navigator.recommendation.roadmap.slice(0, 3).map((step) => step.skill).join(', ') || 'No required skill gaps are listed.' %>
+        </p>
+      <% } %>
+    </section>
   </div>
 </div>
 <%- include('../partials/footer') %>

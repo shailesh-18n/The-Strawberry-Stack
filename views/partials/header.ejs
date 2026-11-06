@@ -20,12 +20,18 @@
           <ul class="navbar-nav ms-auto">
             <% if (user) { %>
               <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+              <li class="nav-item"><a class="nav-link" href="/profile">Learning profile</a></li>
               <li class="nav-item"><a class="nav-link" href="/career">Career Navigator</a></li>
-              <li class="nav-item"><a class="nav-link" href="/assistant">AI Tutor</a></li>
-              <li class="nav-item"><a class="nav-link" href="/assessment">Assessments</a></li>
+              <li class="nav-item"><a class="nav-link" href="/assessment">Skill assessment</a></li>
               <li class="nav-item"><a class="nav-link" href="/skilltrack">SkillTrack</a></li>
-              <li class="nav-item"><a class="nav-link" href="/credentials">Passport</a></li>
-              <li class="nav-item"><a class="nav-link" href="/auth/logout">Logout</a></li>
+              <li class="nav-item"><a class="nav-link" href="/public/offline-learning.html">Offline learning</a></li>
+              <li class="nav-item"><a class="nav-link" href="/assistant">Learning assistant</a></li>
+              <li class="nav-item">
+                <form method="POST" action="/auth/logout">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="nav-link btn btn-link border-0" type="submit">Logout</button>
+                </form>
+              </li>
             <% } else { %>
               <li class="nav-item"><a class="nav-link" href="/auth/login">Login</a></li>
               <li class="nav-item"><a class="nav-link" href="/auth/register">Register</a></li>

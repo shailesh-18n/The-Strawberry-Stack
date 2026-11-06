@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const { seedCareerData, seedAssessmentConfigs } = require('../services/seedService');
 
 const store = {
@@ -123,7 +124,7 @@ const seedDemoUser = () => {
   return createUser({
     name: 'Vivek Das',
     email: 'vivek@vidyachain.app',
-    passwordHash: '$2b$10$ET14kOM4wIR/t8kdWNgCEOO9o0yvEY72cBJAHeRSaN2xk4pFDYOt.',
+    passwordHash: bcrypt.hashSync(crypto.randomUUID(), 10),
     preferredLanguage: 'Bengali',
     interests: ['Python', 'Web development', 'AI'],
     aspirations: ['Python Developer'],
