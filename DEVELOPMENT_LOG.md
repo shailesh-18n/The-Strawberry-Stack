@@ -1,5 +1,18 @@
 # Development Log
 
+## 2026-11-06 — Multilingual Expansion: Hindi & Kannada Support
+
+- Added `Hindi` and `Kannada` as first-class supported languages alongside `Bengali` and `English`.
+- Updated `models/User.js` enum to `['Bengali', 'English', 'Hindi', 'Kannada']`.
+- Updated `utils/studentProfile.js` `LANGUAGES` array to include `Hindi` and `Kannada`.
+- Enhanced `services/aiService.js` to provide localized offline profile guidance in Hindi and Kannada with language-specific roadmap regex keyword detection (`अगला कदम`, `रोडमैप`, `ಮುಂದಿನ ಹಂತ`, `ರಸ್ತೆ ನಕ್ಷೆ`, `ರೋಡ್‌ಮ್ಯಾಪ್`).
+- Updated system prompt for remote AI providers (OpenRouter/Gemini) to support Bengali, Hindi, Kannada, and English.
+- Added comprehensive Hindi and Kannada translations for all offline lessons in `services/offlineLearningService.js` (titles, explanations, activities, self-checks, quiz questions, option labels, and quiz explanations).
+- Updated `public/offline-learning.html` language selector with Hindi (हिन्दी) and Kannada (ಕನ್ನಡ) options.
+- Updated `public/js/offline-learning.js` with localized UI text dictionaries and dynamic `html lang` attribute switching (`'bn'`, `'hi'`, `'kn'`, `'en'`).
+- Added unit tests in `test/studentProfile.test.js`, `test/aiService.test.js`, and `test/offlineLearning.test.js` validating Hindi and Kannada support.
+- Full test suite verified: **58 passed, 0 failed, 0 skipped**. Production dependency audit: **0 vulnerabilities**.
+
 ## 2026-11-05 — Phase 2 Student Interface and Onboarding
 
 - Added a Mongoose `User` model with normalized unique email, hidden bcrypt

@@ -1,6 +1,6 @@
 const { seedCareerData } = require('../services/seedService');
 
-const LANGUAGES = ['Bengali', 'English'];
+const LANGUAGES = ['Bengali', 'English', 'Hindi', 'Kannada'];
 const CAREER_OPTIONS = seedCareerData().map((career) => career.name);
 
 function readString(value) {

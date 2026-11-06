@@ -3,8 +3,8 @@
 VidyaChain is an end-to-end web platform connecting student learning
 interests, skill verification, and career opportunities. It provides student
 registration, persistent learning profiles, a Career Navigator with deterministic
-skill-gap ranking and SVG dependency graphs, bilingual offline-first lessons with
-IndexedDB sync, Bengali/English AI learning guidance, practical coding assessments,
+skill-gap ranking and SVG dependency graphs, multilingual offline-first lessons with
+IndexedDB sync, English/Bengali/Hindi/Kannada AI learning guidance, practical coding assessments,
 a Git-inspired SkillTrack history, an Ed25519 Cryptographic Skill Passport with
 QR verification, opportunity matching for internships, and a Recruiter Dashboard
 with candidate talent discovery and privacy controls.
@@ -103,8 +103,8 @@ OpenRouter requests using `openai/gpt-4o` were verified in Bengali and English.
   pools, filtering by verified skills, and viewing candidate portfolios.
 - `GET /portfolio/:id` renders a student's public/private skill portfolio.
 - `POST /portfolio/privacy` toggles student portfolio privacy between public and private.
-- `/public/offline-learning.html` provides cached English/Bengali HTML, CSS,
-  and JavaScript lessons with offline quizzes. Completions and queued sync
+- `/public/offline-learning.html` provides cached multilingual English, Bengali, Hindi,
+  and Kannada HTML, CSS, and JavaScript lessons with offline quizzes. Completions and queued sync
   state are stored in IndexedDB and can be synced to the signed-in student's
   MongoDB profile while online. Completion-wins merging preserves progress
   created concurrently on another device.

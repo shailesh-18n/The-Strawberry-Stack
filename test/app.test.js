@@ -278,6 +278,8 @@ test('student registration, profile updates, login, and persistence use MongoDB'
     assert.equal(registrationPage.status, 200);
     const registrationHtml = await registrationPage.text();
     assert.match(registrationHtml, /Bengali/);
+    assert.match(registrationHtml, /Hindi/);
+    assert.match(registrationHtml, /Kannada/);
     assert.match(registrationHtml, /Python Developer/);
     assert.match(registrationHtml, /name="skillInventory"/);
 

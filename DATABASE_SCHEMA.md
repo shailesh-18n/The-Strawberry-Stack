@@ -15,7 +15,7 @@ if catalogue seeding fails.
 - `passwordHash`: required bcrypt hash; excluded from normal query selection;
   registration accepts passwords of at least 10 characters and at most 72
   UTF-8 bytes to match bcrypt's effective input limit
-- `preferredLanguage`: `Bengali` or `English`
+- `preferredLanguage`: enum `['Bengali', 'English', 'Hindi', 'Kannada']`, default `'Bengali'`
 - `interests`: up to 10 learner-provided strings, max 80 characters each
 - `aspirations`: up to 10 selected career names, max 80 characters each
 - `skillInventory`: up to 10 strings, max 80 characters each

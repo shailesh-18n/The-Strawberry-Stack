@@ -15,7 +15,7 @@ The planned user journey is:
 
 1. A learner visits the landing page and creates an account with their name,
    email, and password.
-2. During registration the learner selects Bengali or English, learning
+2. During registration the learner selects Bengali, English, Hindi, or Kannada, learning
    interests, career aspirations, and optional education, skills, learning
    preferences, access needs, and profile summary.
 3. The learner views a dashboard and can update the profile at any time.
@@ -33,7 +33,7 @@ The planned user journey is:
 | Project foundation | Express server, EJS, Bootstrap styling, configuration, security middleware, health checks | Implemented and tested in Phase 1 |
 | Student onboarding | Registration, login, language/career-interest selection, persistent profile create/update | Implemented and tested in Phase 2 |
 | Career navigation | Structured ranking, career focus, skill gaps, dependency-aware roadmap, responsive graph | Implemented and tested in Phase 3 |
-| Learning guidance | Profile-context Bengali/English assistant, optional Gemini/OpenAI-compatible provider and offline guidance | Implemented and live-verified with OpenRouter in Bengali and English |
+| Learning guidance | Profile-context multilingual (Bengali, Hindi, Kannada, English) assistant, optional Gemini/OpenAI-compatible provider and offline guidance | Implemented and live-verified with OpenRouter |
 | Skill assessment | Fixed-answer questions, persisted attempts, assessed skill references | Implemented and tested in Phase 3 |
 | Practical coding assessment | Fixed Python list-sum challenge, OnlineCompiler.io multi-case execution, bounded result persistence and SkillTrack record | Managed provider integration live-verified against four cases; no VidyaChain-hosted gVisor runner; provider claims not independently audited |
 | Offline learning | Cached bilingual HTML/CSS/JavaScript lessons and quizzes, IndexedDB completion queue, authenticated conflict-aware sync | Verified in network-offline Chromium and installed/ launched as a native Chrome desktop PWA |

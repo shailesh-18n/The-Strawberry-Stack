@@ -35,7 +35,7 @@ skill portfolios with privacy controls, and health probes.
 | `GET /portfolio/:id` | Student public/private skill portfolio displaying verified credentials, assessments, and learning milestone commits. Respects student privacy settings. |
 | `POST /portfolio/privacy` | Toggles student portfolio privacy setting between `public` and `private`. Requires authentication and CSRF. |
 | `GET /assistant` | Shows the authenticated learner's assistant form and current career/skill context. |
-| `POST /assistant` | Returns Bengali/English guidance from a configured Gemini or OpenAI-compatible provider, or labeled offline mode. Requires CSRF; question length is 1–1,000 characters. |
+| `POST /assistant` | Returns vernacular guidance (Bengali, English, Hindi, Kannada) from a configured Gemini or OpenAI-compatible provider, or labeled offline mode. Requires CSRF; question length is 1–1,000 characters. |
 | `GET /public/offline-learning.html` | Standalone offline lesson interface; its shell and lesson pack are pre-cached by the service worker. |
 | `GET /learning/offline-pack` | Public, cacheable bilingual HTML/CSS/JavaScript lesson content. Does not create a session cookie. |
 | `GET /learning/progress/state` | Authenticated learner's synced lesson slugs and a session-bound CSRF token. Response is private and no-store. |
@@ -46,7 +46,7 @@ characters (maximum 72 UTF-8 bytes) on registration,
 preferred language, learning interests, career aspirations, current skills,
 education level, learning preferences, access needs, and a short profile
 summary. Career aspirations must match the configured career choices.
-Preferred language is Bengali or English. State-changing form submissions
+Preferred language is Bengali, English, Hindi, or Kannada. State-changing form submissions
 require a session-bound CSRF token.
 
 The coding assessment currently supports one fixed Python list-sum challenge,

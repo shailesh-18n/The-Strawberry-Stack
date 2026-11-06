@@ -8,23 +8,24 @@ const {
   normalizeCompletedSkills,
 } = require('../services/offlineLearningService');
 
-test('offline lesson pack contains bilingual explanations, activities, and checks', () => {
+test('offline lesson pack contains multilingual explanations, activities, and checks', () => {
   const pack = getOfflineLearningPack();
 
   assert.equal(pack.version, 1);
   assert.deepEqual(pack.lessons.map((lesson) => lesson.skillSlug), ['html', 'css', 'javascript']);
+  const languages = ['English', 'Bengali', 'Hindi', 'Kannada'];
   for (const lesson of pack.lessons) {
     for (const field of ['title', 'explanation', 'activity', 'check']) {
-      assert.equal(typeof lesson[field].English, 'string');
-      assert.equal(typeof lesson[field].Bengali, 'string');
-      assert.ok(lesson[field].English.length > 0);
-      assert.ok(lesson[field].Bengali.length > 0);
+      for (const lang of languages) {
+        assert.equal(typeof lesson[field][lang], 'string');
+        assert.ok(lesson[field][lang].length > 0);
+      }
     }
-    assert.ok(lesson.quiz.question.English);
-    assert.ok(lesson.quiz.question.Bengali);
+    for (const lang of languages) {
+      assert.ok(lesson.quiz.question[lang]);
+      assert.ok(lesson.quiz.explanation[lang]);
+    }
     assert.ok(lesson.quiz.options.some((option) => option.value === lesson.quiz.answer));
-    assert.ok(lesson.quiz.explanation.English);
-    assert.ok(lesson.quiz.explanation.Bengali);
   }
 });
 

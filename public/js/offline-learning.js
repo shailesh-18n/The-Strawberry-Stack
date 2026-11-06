@@ -78,6 +78,65 @@
     });
   }
 
+  const UI_STRINGS = {
+    English: {
+      lang: 'en',
+      progress: (c, p) => `${c} lesson${c === 1 ? '' : 's'} completed${p ? `, ${p} queued to sync` : ''}.`,
+      activity: 'Try it',
+      checkAnswer: 'Check answer',
+      chooseFirst: 'Choose an answer first.',
+      correct: 'Correct.',
+      tryAgain: 'Try again.',
+      reflect: 'Reflect',
+      completed: 'Completed on this device',
+      notCompleted: 'Not completed yet',
+      markComplete: 'Mark lesson complete',
+    },
+    Bengali: {
+      lang: 'bn',
+      progress: (c, p) => `${c}টি পাঠ সম্পন্ন${p ? `, ${p}টি সিঙ্কের অপেক্ষায়` : ''}।`,
+      activity: 'অনুশীলন',
+      checkAnswer: 'উত্তর যাচাই করুন',
+      chooseFirst: 'একটি উত্তর বেছে নিন।',
+      correct: 'সঠিক।',
+      tryAgain: 'আবার চেষ্টা করুন।',
+      reflect: 'নিজেকে যাচাই করুন',
+      completed: 'সম্পন্ন',
+      notCompleted: 'এখনও সম্পন্ন হয়নি',
+      markComplete: 'পাঠ সম্পন্ন হয়েছে',
+    },
+    Hindi: {
+      lang: 'hi',
+      progress: (c, p) => `${c} पाठ पूरे हुए${p ? `, ${p} सिंक के लिए कतार में` : ''}।`,
+      activity: 'अभ्यास',
+      checkAnswer: 'उत्तर जांचें',
+      chooseFirst: 'पहले एक उत्तर चुनें।',
+      correct: 'सही उत्तर।',
+      tryAgain: 'पुनः प्रयास करें।',
+      reflect: 'विचार करें',
+      completed: 'इस डिवाइस पर पूर्ण हुआ',
+      notCompleted: 'अभी तक पूर्ण नहीं हुआ',
+      markComplete: 'पाठ को पूर्ण चिह्नित करें',
+    },
+    Kannada: {
+      lang: 'kn',
+      progress: (c, p) => `${c} ಪಾಠಗಳು ಪೂರ್ಣಗೊಂಡಿವೆ${p ? `, ${p} ಸಿಂಕ್ ಮಾಡಲು ಕಾಯುತ್ತಿವೆ` : ''}.`,
+      activity: 'ಅಭ್ಯಾಸ',
+      checkAnswer: 'ಉತ್ತರ ಪರಿಶೀಲಿಸಿ',
+      chooseFirst: 'ಮೊದಲು ಒಂದು ಉತ್ತರವನ್ನು ಆಯ್ಕೆಮಾಡಿ.',
+      correct: 'ಸರಿ.',
+      tryAgain: 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+      reflect: 'ಆತ್ಮಾವಲೋಕನ',
+      completed: 'ಈ ಸಾಧನದಲ್ಲಿ ಪೂರ್ಣಗೊಂಡಿದೆ',
+      notCompleted: 'ಇನ್ನೂ ಪೂರ್ಣಗೊಂಡಿಲ್ಲ',
+      markComplete: 'ಪಾಠ ಪೂರ್ಣಗೊಂಡಿದೆ ಎಂದು ಗುರುತಿಸಿ',
+    },
+  };
+
+  function getLabels(language) {
+    return UI_STRINGS[language] || UI_STRINGS.English;
+  }
+
   function setStatus(message) {
     statusElement.textContent = message;
     const online = navigator.onLine;
@@ -88,12 +147,10 @@
   }
 
   function updateProgressCount() {
-    const language = languageElement.value;
+    const labels = getLabels(languageElement.value);
     const completed = progress.completedSkills.length;
     const pending = progress.pendingSkills.length;
-    progressElement.textContent = language === 'Bengali'
-      ? `${completed}টি পাঠ সম্পন্ন${pending ? `, ${pending}টি সিঙ্কের অপেক্ষায়` : ''}।`
-      : `${completed} lesson${completed === 1 ? '' : 's'} completed${pending ? `, ${pending} queued to sync` : ''}.`;
+    progressElement.textContent = labels.progress(completed, pending);
   }
 
   function addParagraph(parent, text) {
@@ -106,27 +163,28 @@
   function render() {
     lessonsElement.replaceChildren();
     const language = languageElement.value;
-    document.documentElement.lang = language === 'Bengali' ? 'bn' : 'en';
+    const labels = getLabels(language);
+    document.documentElement.lang = labels.lang;
     for (const lesson of lessons) {
       const card = document.createElement('article');
       const complete = progress.completedSkills.includes(lesson.skillSlug);
       card.className = `lesson${complete ? ' lesson-complete' : ''}`;
 
       const title = document.createElement('h2');
-      title.textContent = lesson.title[language];
+      title.textContent = lesson.title[language] || lesson.title.English;
       card.append(title);
       addParagraph(card, `${lesson.category} · ${lesson.level}`);
-      addParagraph(card, lesson.explanation[language]);
+      addParagraph(card, lesson.explanation[language] || lesson.explanation.English);
 
       const activityTitle = document.createElement('h3');
-      activityTitle.textContent = language === 'Bengali' ? 'অনুশীলন' : 'Try it';
+      activityTitle.textContent = labels.activity;
       card.append(activityTitle);
-      addParagraph(card, lesson.activity[language]);
+      addParagraph(card, lesson.activity[language] || lesson.activity.English);
 
       const quiz = document.createElement('fieldset');
       quiz.className = 'offline-quiz';
       const question = document.createElement('legend');
-      question.textContent = lesson.quiz.question[language];
+      question.textContent = lesson.quiz.question[language] || lesson.quiz.question.English;
       quiz.append(question);
       const feedback = document.createElement('p');
       feedback.className = 'quiz-feedback';
@@ -140,43 +198,42 @@
         input.value = option.value;
         input.id = `quiz-${lesson.skillSlug}-${index}`;
         const text = document.createElement('span');
-        text.textContent = option.label[language];
+        text.textContent = option.label[language] || option.label.English;
         label.append(input, text);
         quiz.append(label);
       }
       const checkButton = document.createElement('button');
       checkButton.type = 'button';
-      checkButton.textContent = language === 'Bengali' ? 'উত্তর যাচাই করুন' : 'Check answer';
+      checkButton.textContent = labels.checkAnswer;
       checkButton.addEventListener('click', () => {
         const selected = quiz.querySelector(`input[name="quiz-${lesson.skillSlug}"]:checked`);
         if (!selected) {
-          feedback.textContent = language === 'Bengali' ? 'একটি উত্তর বেছে নিন।' : 'Choose an answer first.';
+          feedback.textContent = labels.chooseFirst;
           return;
         }
         const correct = selected.value === lesson.quiz.answer;
+        const explanation = lesson.quiz.explanation[language] || lesson.quiz.explanation.English;
         feedback.textContent = correct
-          ? `${language === 'Bengali' ? 'সঠিক।' : 'Correct.'} ${lesson.quiz.explanation[language]}`
-          : (language === 'Bengali' ? 'আবার চেষ্টা করুন।' : 'Try again.');
+          ? `${labels.correct} ${explanation}`
+          : labels.tryAgain;
         feedback.className = `quiz-feedback ${correct ? 'is-correct' : 'is-incorrect'}`;
       });
       quiz.append(checkButton, feedback);
       card.append(quiz);
 
       const reflectionTitle = document.createElement('h3');
-      reflectionTitle.textContent = language === 'Bengali' ? 'নিজেকে যাচাই করুন' : 'Reflect';
+      reflectionTitle.textContent = labels.reflect;
       card.append(reflectionTitle);
-      addParagraph(card, lesson.check[language]);
+      addParagraph(card, lesson.check[language] || lesson.check.English);
       const state = document.createElement('p');
       state.className = 'completion-state';
-      state.textContent = complete
-        ? (language === 'Bengali' ? 'সম্পন্ন' : 'Completed on this device')
-        : (language === 'Bengali' ? 'এখনও সম্পন্ন হয়নি' : 'Not completed yet');
+      state.textContent = complete ? labels.completed : labels.notCompleted;
       card.append(state);
 
       if (!complete) {
         const button = document.createElement('button');
         button.type = 'button';
-        button.textContent = language === 'Bengali' ? 'পাঠ সম্পন্ন হয়েছে' : 'Mark lesson complete';
+        button.textContent = labels.markComplete;
         button.addEventListener('click', async () => {
           progress.completedSkills = [...new Set([...progress.completedSkills, lesson.skillSlug])];
           progress.pendingSkills = [...new Set([...progress.pendingSkills, lesson.skillSlug])];

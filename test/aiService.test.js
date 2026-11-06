@@ -77,6 +77,14 @@ test('offline assistant replies in the selected vernacular and uses a personaliz
     preferredLanguage: 'Bengali',
     aspirations: ['Python Developer'],
   }, 'পরবর্তী ধাপ কী?', navigator);
+  const hindi = getLocalReply({
+    preferredLanguage: 'Hindi',
+    aspirations: ['Python Developer'],
+  }, 'अगला कदम क्या है?', navigator);
+  const kannada = getLocalReply({
+    preferredLanguage: 'Kannada',
+    aspirations: ['Python Developer'],
+  }, 'ಮುಂದಿನ ಹಂತವೇನು?', navigator);
 
   assert.equal(english.mode, 'offline');
   assert.match(english.answer, /Python Developer/);
@@ -84,6 +92,12 @@ test('offline assistant replies in the selected vernacular and uses a personaliz
   assert.equal(bengali.language, 'Bengali');
   assert.match(bengali.answer, /লক্ষ্যের জন্য/);
   assert.match(bengali.answer, /Functions, Testing/);
+  assert.equal(hindi.language, 'Hindi');
+  assert.match(hindi.answer, /लक्ष्य के लिए/);
+  assert.match(hindi.answer, /Functions, Testing/);
+  assert.equal(kannada.language, 'Kannada');
+  assert.match(kannada.answer, /ಗುರಿಗಾಗಿ/);
+  assert.match(kannada.answer, /Functions, Testing/);
 });
 
 test('configured assistant provider receives only non-identifying skill context', async () => {

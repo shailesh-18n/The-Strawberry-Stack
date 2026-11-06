@@ -15,6 +15,14 @@ function validProfile(overrides = {}) {
 }
 
 test('profile validation rejects unsupported language and career choices', () => {
+  assert.equal(
+    validateStudentProfile(validProfile({ preferredLanguage: 'Hindi' })),
+    null,
+  );
+  assert.equal(
+    validateStudentProfile(validProfile({ preferredLanguage: 'Kannada' })),
+    null,
+  );
   assert.match(
     validateStudentProfile(validProfile({ preferredLanguage: 'French' })),
     /supported preferred language/,
