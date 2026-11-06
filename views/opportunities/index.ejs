@@ -1,0 +1,103 @@
+<%- include('../partials/header') %>
+<div class="mb-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <p class="text-primary fw-semibold mb-1">Opportunity Matching • Phase 9</p>
+      <h1>Internships & career opportunities</h1>
+      <p class="lead mb-0">Opportunities matched deterministically against your verified assessment credentials and reported skills.</p>
+    </div>
+    <div>
+      <a href="/career" class="btn btn-outline-primary">Career Navigator</a>
+      <a href="/credentials" class="btn btn-outline-secondary ms-1">Skill Passport</a>
+    </div>
+  </div>
+</div>
+
+<% if (matches && matches.length) { %>
+  <div class="row g-4">
+    <% matches.forEach((match) => { %>
+      <% const opp = match.opportunity; %>
+      <div class="col-12">
+        <div class="card p-4 shadow-sm border h-100">
+          <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-2">
+            <div>
+              <span class="badge bg-info-subtle text-info border border-info mb-1"><%= opp.type %></span>
+              <h2 class="h4 mb-1 text-dark"><%= opp.title %></h2>
+              <p class="text-muted mb-0">
+                <strong><%= opp.company %></strong> • <%= opp.location %>
+                <% if (opp.stipend) { %> • <span class="text-success fw-semibold"><%= opp.stipend %></span><% } %>
+              </p>
+            </div>
+            <div>
+              <% if (match.matchPercentage >= 75) { %>
+                <span class="badge bg-success fs-6 py-2 px-3">★ <%= match.matchPercentage %>% Match • Strong Candidate</span>
+              <% } else if (match.matchPercentage >= 40) { %>
+                <span class="badge bg-primary fs-6 py-2 px-3">▲ <%= match.matchPercentage %>% Match • Good Candidate</span>
+              <% } else { %>
+                <span class="badge bg-secondary fs-6 py-2 px-3"><%= match.matchPercentage %>% Match</span>
+              <% } %>
+            </div>
+          </div>
+
+          <p class="text-secondary mt-2 mb-3"><%= opp.description %></p>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-6">
+              <h3 class="h6 text-muted mb-2">Required Skills</h3>
+              <div class="d-flex flex-wrap gap-1">
+                <% match.matchedRequiredSkills.forEach((item) => { %>
+                  <% if (item.verified) { %>
+                    <span class="badge bg-success-subtle text-success border border-success">✓ <%= item.name %> (Verified)</span>
+                  <% } else { %>
+                    <span class="badge bg-primary-subtle text-primary border border-primary">● <%= item.name %> (Reported)</span>
+                  <% } %>
+                <% }) %>
+                <% match.missingRequiredSkills.forEach((item) => { %>
+                  <span class="badge bg-danger-subtle text-danger border border-danger">✗ <%= item.name %> (Missing)</span>
+                <% }) %>
+              </div>
+            </div>
+
+            <% if (opp.preferredSkills && opp.preferredSkills.length) { %>
+              <div class="col-12 col-md-6">
+                <h3 class="h6 text-muted mb-2">Preferred Skills</h3>
+                <div class="d-flex flex-wrap gap-1">
+                  <% match.matchedPreferredSkills.forEach((item) => { %>
+                    <span class="badge bg-info-subtle text-info border border-info">✓ <%= item.name %></span>
+                  <% }) %>
+                  <% match.missingPreferredSkills.forEach((item) => { %>
+                    <span class="badge bg-light text-muted border">○ <%= item.name %></span>
+                  <% }) %>
+                </div>
+              </div>
+            <% } %>
+          </div>
+
+          <% if (match.improvementSuggestions && match.improvementSuggestions.length) { %>
+            <div class="bg-light p-3 rounded mb-3">
+              <h4 class="h6 text-dark mb-1">💡 Bridge your skill gap</h4>
+              <ul class="mb-0 small text-muted ps-3">
+                <% match.improvementSuggestions.forEach((suggestion) => { %>
+                  <li><%= suggestion %></li>
+                <% }) %>
+              </ul>
+            </div>
+          <% } %>
+
+          <div class="d-flex flex-wrap gap-2 pt-2 border-top mt-auto align-items-center">
+            <a href="/assessment" class="btn btn-primary btn-sm">Take Assessment</a>
+            <a href="/career" class="btn btn-outline-primary btn-sm">View Roadmap</a>
+            <a href="/credentials" class="btn btn-outline-secondary btn-sm">View Passport</a>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="card p-5 text-center">
+    <p class="text-muted mb-0">No active opportunities found. Check back soon!</p>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>
+

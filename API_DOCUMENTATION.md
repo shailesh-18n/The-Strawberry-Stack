@@ -1,16 +1,18 @@
 # API Documentation
 
 The mounted HTTP surface includes student onboarding/profile flows, the
-Career Navigator and skill assessments, the Vernacular Assistant, offline
-lesson and progress-sync endpoints, and health probes. Credential and
-recruiter route drafts are not mounted.
+Career Navigator and skill assessments, Git-inspired SkillTrack history,
+the Vernacular Assistant, offline lesson and progress-sync endpoints,
+the Cryptographic Skill Passport, public credential verification, Opportunity
+Matching for internships, Recruiter Dashboard and candidate search, student
+skill portfolios with privacy controls, and health probes.
 
 ## Student authentication and profile
 
 | Method and path | Behavior |
 | --- | --- |
 | `GET /` | Student onboarding landing page. |
-| `GET /auth/register` | Registration and onboarding form. |
+| `GET /auth/register` | Registration and onboarding form. Supports role selection (`student` or `recruiter`). |
 | `POST /auth/register` | Validates input, hashes the password, creates a MongoDB user, and starts a session. Success redirects to `/dashboard` with HTTP 303. |
 | `GET /auth/login` | Login form. |
 | `POST /auth/login` | Verifies password and starts a regenerated session. Success redirects to `/dashboard` or a safe same-origin return path. Invalid credentials return HTTP 401. |
@@ -21,10 +23,17 @@ recruiter route drafts are not mounted.
 | `GET /career` | Authenticated Career Navigator ranked from saved profile aspirations, interests, and skill inventory. |
 | `GET /career?career=<slug>` | Focuses a known career path while retaining profile match details. Unknown slugs return the shared HTTP 404 page. |
 | `GET /assessment` | Lists fixed-answer skill quizzes, the Python List Sum coding assessment, and recent attempts for the signed-in student. |
-| `POST /assessment/:challengeId/submit` | Scores fixed multiple-choice answers, persists a `StudentAssessment`, and adds a passed skill reference to the student's verified skills. Requires CSRF. |
-| `POST /assessment/:challengeId/submit-code` | Validates the fixed Python challenge, source size, consent, and idempotency key; sends code and fixed tests to OnlineCompiler.io; persists bounded results and SkillTrack progress. Requires student authentication, CSRF, explicit provider consent, and the configured server-side `ONLINECOMPILER_API_KEY`. |
-| `GET /skilltrack` | Displays the signed-in student's self-reported milestones, persisted coding assessment progress, and synchronized offline lesson completions. |
-| `POST /skilltrack` | Validates and stores a self-reported skill milestone. The prior level is derived from that student's latest milestone for the selected skill. Requires authentication and CSRF. |
+| `POST /assessment/:challengeId/submit` | Scores fixed multiple-choice answers, persists a `StudentAssessment`, commits the result to SkillTrack, issues a cryptographic credential on pass, and adds verified skill references. Requires CSRF. |
+| `POST /assessment/:challengeId/submit-code` | Validates the fixed Python challenge, source size, consent, and idempotency key; sends code and fixed tests to OnlineCompiler.io; persists bounded results, SkillTrack progress, Git-log commit, and cryptographic credential on pass. Requires student authentication, CSRF, explicit provider consent, and the configured server-side `ONLINECOMPILER_API_KEY`. |
+| `GET /skilltrack` | Displays the signed-in student's Git-inspired learning history commit log, career-path branches, tags, score diffs, assessment records, and offline lesson completions. Supports `?branch=<name>` filtering. |
+| `POST /skilltrack` | Validates and stores a learning milestone commit with optional branch and tag. Derives prior level, computes improvement/regression diff, and appends an immutable commit. Requires authentication and CSRF. |
+| `GET /credentials` (and `/passport`) | Authenticated Skill Passport displaying the student's cryptographically signed credentials, SHA-256 evidence hashes, hash chain links, and QR codes. |
+| `GET /verify/:id` | Public verification endpoint. Cryptographically verifies Ed25519 digital signature and evidence hash chain. |
+| `GET /verify/preview` | Public verification preview endpoint accepting `?verificationId=<id>`. |
+| `GET /opportunities` | Personalized opportunity matching. Ranks active internships against student skills (verified 1.0 vs reported 0.8), identifies missing skills, and suggests improvement paths. |
+| `GET /recruiter` | Recruiter Dashboard for discovering candidate talent pools, filtering by verified skills, and viewing candidate portfolios. |
+| `GET /portfolio/:id` | Student public/private skill portfolio displaying verified credentials, assessments, and learning milestone commits. Respects student privacy settings. |
+| `POST /portfolio/privacy` | Toggles student portfolio privacy setting between `public` and `private`. Requires authentication and CSRF. |
 | `GET /assistant` | Shows the authenticated learner's assistant form and current career/skill context. |
 | `POST /assistant` | Returns Bengali/English guidance from a configured Gemini or OpenAI-compatible provider, or labeled offline mode. Requires CSRF; question length is 1–1,000 characters. |
 | `GET /public/offline-learning.html` | Standalone offline lesson interface; its shell and lesson pack are pre-cached by the service worker. |

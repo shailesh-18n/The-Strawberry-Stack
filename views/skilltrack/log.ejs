@@ -1,8 +1,17 @@
 <%- include('../partials/header') %>
 <div class="mb-4">
-  <p class="text-primary fw-semibold mb-1">SkillTrack</p>
-  <h1>Learning progress</h1>
-  <p class="lead">Record milestones and review progress from your assessments and offline lessons.</p>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <p class="text-primary fw-semibold mb-1">SkillTrack • Git-inspired Learning History</p>
+      <h1>Learning progress</h1>
+      <p class="lead mb-0">Record milestones, track assessments as commits, compare skill diffs, and inspect your learning history.</p>
+    </div>
+    <div class="text-md-end">
+      <span class="badge bg-dark px-3 py-2 fs-6">
+        <span class="text-muted">Repo:</span> <%= user.name %> (<%= user.email %>)
+      </span>
+    </div>
+  </div>
 </div>
 
 <% if (saved) { %>
@@ -35,7 +44,7 @@
 
 <section class="card p-4 mb-4" aria-labelledby="milestone-form-title">
   <h2 class="h4" id="milestone-form-title">Log a learning milestone</h2>
-  <p class="text-muted">These level updates are self-reported learning notes, not a verified credential.</p>
+  <p class="text-muted">Create a learning record (commit) on your learning path. These level updates are self-reported learning notes, not a verified credential.</p>
   <form method="POST" action="/skilltrack" novalidate>
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <div class="row g-3">
@@ -57,6 +66,18 @@
           <% }) %>
         </select>
       </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="branch-name">Branch (Career / Learning Path)</label>
+        <select class="form-select" id="branch-name" name="branch">
+          <% (branches || ['main']).forEach((b) => { %>
+            <option value="<%= b %>" <%= (form.branch || 'main') === b ? 'selected' : '' %>> <%= b %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label" for="tag-name">Milestone Tag (Optional)</label>
+        <input class="form-control" id="tag-name" name="tag" maxlength="50" value="<%= form.tag || '' %>" placeholder="e.g. v1.0-milestone">
+      </div>
       <div class="col-12">
         <label class="form-label" for="commit-message">Milestone title</label>
         <input class="form-control" id="commit-message" name="commitMessage" minlength="3" maxlength="100" required value="<%= form.commitMessage || '' %>" placeholder="For example: Built my first responsive page">
@@ -71,15 +92,69 @@
 </section>
 
 <section class="card p-4 mb-4" aria-labelledby="milestone-history-title">
-  <h2 class="h4" id="milestone-history-title">Your milestones</h2>
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+    <div>
+      <h2 class="h4 mb-0" id="milestone-history-title">Your milestones</h2>
+      <p class="text-muted small mb-0">Git log • Append-only historical learning commits</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="small fw-semibold text-muted">Branch:</span>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Branch filter">
+        <a href="/skilltrack?branch=all" class="btn <%= selectedBranch === 'all' ? 'btn-dark' : 'btn-outline-dark' %>">All</a>
+        <% (branches || ['main']).forEach((b) => { %>
+          <a href="/skilltrack?branch=<%= b %>" class="btn <%= selectedBranch === b ? 'btn-dark' : 'btn-outline-dark' %>"> <%= b %></a>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+
   <% if (entries.length) { %>
     <ol class="list-group list-group-numbered">
       <% entries.forEach((entry) => { %>
-        <li class="list-group-item">
-          <h3 class="h6 mb-1"><%= entry.commitMessage %></h3>
-          <p class="mb-1"><strong><%= entry.skill.name %>:</strong> <%= entry.previousLevel %> to <%= entry.currentLevel %></p>
-          <p class="mb-1"><%= entry.changeSummary %></p>
-          <time class="small text-muted" datetime="<%= entry.createdAt.toISOString() %>"><%= entry.createdAt.toLocaleString() %></time>
+        <li class="list-group-item p-3 mb-2 border rounded">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+            <div>
+              <span class="badge bg-secondary font-monospace">commit <%= entry.commitHash || String(entry._id).slice(0, 8) %></span>
+              <span class="badge bg-light text-dark border"> <%= entry.branch || 'main' %></span>
+              <% if (entry.tag) { %>
+                <span class="badge bg-primary">🏷️ <%= entry.tag %></span>
+              <% } %>
+              <% if (entry.isVerified) { %>
+                <span class="badge bg-success">✓ Verified Assessment</span>
+              <% } else if (entry.entryType === 'assessment') { %>
+                <span class="badge bg-warning text-dark">Assessment Attempt</span>
+              <% } else { %>
+                <span class="badge bg-info text-dark">Self-reported Milestone</span>
+              <% } %>
+            </div>
+            <div>
+              <% if (entry.status === 'improved') { %>
+                <span class="badge bg-success-subtle text-success border border-success">▲ <%= entry.diff || 'Improved' %></span>
+              <% } else if (entry.status === 'regressed') { %>
+                <span class="badge bg-danger-subtle text-danger border border-danger">▼ <%= entry.diff || 'Regressed' %></span>
+              <% } else if (entry.status === 'unchanged') { %>
+                <span class="badge bg-light text-secondary border">■ <%= entry.diff || 'Unchanged' %></span>
+              <% } else if (entry.diff) { %>
+                <span class="badge bg-info-subtle text-info border border-info">★ <%= entry.diff %></span>
+              <% } %>
+            </div>
+          </div>
+          <h3 class="h6 mb-1 text-dark fw-bold"><%= entry.commitMessage %></h3>
+          <p class="mb-1 text-secondary">
+            <strong><%= entry.skill ? entry.skill.name : 'Skill' %>:</strong>
+            <span class="text-capitalize"><%= entry.previousLevel %></span> to <span class="text-capitalize"><%= entry.currentLevel %></span>
+            <% if (entry.score != null) { %>
+              • <strong>Score:</strong> <%= entry.score %>%
+              <% if (entry.scoreDelta != null && entry.scoreDelta !== 0) { %>
+                (<%= entry.scoreDelta > 0 ? '+' : '' %><%= entry.scoreDelta %>%)
+              <% } %>
+            <% } %>
+          </p>
+          <p class="mb-2"><%= entry.changeSummary %></p>
+          <div class="d-flex align-items-center justify-content-between text-muted small">
+            <span>Author: <strong><%= user.name %></strong></span>
+            <time datetime="<%= entry.createdAt.toISOString() %>"><%= entry.createdAt.toLocaleString() %></time>
+          </div>
         </li>
       <% }) %>
     </ol>
@@ -97,7 +172,7 @@
         <ul class="list-group list-group-flush">
           <% assessmentProgress.forEach((record) => { %>
             <li class="list-group-item px-0">
-              <strong><%= record.skill.name %></strong> — <%= record.passed ? 'Passed' : 'Needs practice' %> (<%= record.score %>%)
+              <strong><%= record.skill ? record.skill.name : 'Coding Skill' %></strong> — <%= record.passed ? 'Passed' : 'Needs practice' %> (<%= record.score %>%)
               <time class="d-block small text-muted" datetime="<%= record.createdAt.toISOString() %>"><%= record.createdAt.toLocaleString() %></time>
             </li>
           <% }) %>
@@ -112,7 +187,7 @@
         <ul class="list-group list-group-flush">
           <% lessonProgress.forEach((record) => { %>
             <li class="list-group-item px-0">
-              <strong><%= record.skill.name %></strong> completed
+              <strong><%= record.skill ? record.skill.name : 'Lesson' %></strong> completed
               <time class="d-block small text-muted" datetime="<%= record.completedAt.toISOString() %>"><%= record.completedAt.toLocaleString() %></time>
             </li>
           <% }) %>

@@ -17,3 +17,13 @@ services:
         generateValue: true
       - key: MONGODB_URI
         sync: false
+      - key: ONLINECOMPILER_API_KEY
+        sync: false
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_API_URL
+        sync: false
+      - key: AI_MODEL
+        sync: false
+      - key: DNS_SERVERS
+        sync: false

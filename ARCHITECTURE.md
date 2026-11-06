@@ -38,9 +38,12 @@ The planned user journey is:
 | Practical coding assessment | Fixed Python list-sum challenge, OnlineCompiler.io multi-case execution, bounded result persistence and SkillTrack record | Managed provider integration live-verified against four cases; no VidyaChain-hosted gVisor runner; provider claims not independently audited |
 | Offline learning | Cached bilingual HTML/CSS/JavaScript lessons and quizzes, IndexedDB completion queue, authenticated conflict-aware sync | Verified in network-offline Chromium and installed/ launched as a native Chrome desktop PWA |
 | Hosting | Render Node web service, MongoDB Atlas, separate Oracle Cloud runner | Render Blueprint prepared; no cloud service or runner is deployed |
-| SkillTrack | Student-owned self-reported skill milestones plus coding-assessment and offline-lesson progress history | Implemented and tested in Phase 7; milestone levels are not credentials |
-| Credentials | Signed achievement records and public verification | Existing draft only; not mounted |
-| Recruiter tools | Credential inspection and verification | Existing draft only; not mounted |
+| SkillTrack | Git-inspired learning history: Repository (profile), Commit (assessment/milestone), Branch (career path), Diff (comparison), Tag (milestone), Git log (timeline) | Implemented and verified in Phase 7 |
+| Credentials | Cryptographic Skill Passport: Ed25519 asymmetric signatures, SHA-256 evidence hashing, hash chaining, QR verification, student passport view, public verification | Implemented and verified in Phase 8 |
+| Opportunity Matching | Deterministic matching (75% required / 25% preferred, verified 1.0 vs reported 0.8), missing skill suggestions, internship listings | Implemented and verified in Phase 9 |
+| Recruiter Dashboard | Candidate discovery pool, verified skill filtering, student skill portfolio view, portfolio privacy controls | Implemented and verified in Phase 9 |
+| End-to-End Integration | Full student journey across all services with MongoDB persistence and live API testing | Implemented and verified in Phase 10 |
+| Deployment & Hackathon Readiness | Render Blueprint (`render.yaml`), Atlas configuration, demo accounts, demo script, judge Q&A | Implemented and verified in Phase 11 |
 
 ## Student and Career Navigator request flow
 
@@ -57,11 +60,15 @@ Browser
         -> Student dashboard/profile -> authenticated Mongoose User
         -> Authenticated career navigator -> deterministic ranking + SVG graph -> authenticated Mongoose User
         -> Skill assessments -> fixed-answer or OnlineCompiler.io result -> StudentAssessment + SkillTrackProgress -> assessed skill refs on pass
-        -> SkillTrack -> SkillTrackEntry self-reports + SkillTrackProgress + LearningProgress history (student-scoped)
+        -> SkillTrack -> Git-inspired commit log, career-path branches, assessment commits, diffs
+        -> Skill Passport (/credentials, /passport) -> Ed25519-signed credentials + QR codes
+        -> Public verification (/verify/:id, /verify/preview) -> Ed25519 signature & hash chain verification
+        -> Opportunity matching (/opportunities) -> deterministic ranking, gap analysis, improvement recommendations
+        -> Recruiter Dashboard (/recruiter) -> talent search, candidate portfolio view (/portfolio/:id), privacy controls (/portfolio/privacy)
         -> Vernacular assistant -> profile context -> configured AI endpoint or offline guidance
         -> Offline lessons/quizzes -> service-worker cache + IndexedDB queue -> authenticated sync/merge -> LearningProgress
         -> Health probes
-  -> MongoDB connection and reference catalogue seeding (config/db.js, catalogService.js)
+  -> MongoDB connection and reference catalogue seeding (config/db.js, catalogService.js, opportunityService.js)
 ```
 
 ## Structure
@@ -173,10 +180,15 @@ assistant conversations are computed per request and are not persisted. See
   device. AI generation, guided assessments, account features, and cloud sync
   remain online-only.
 
-## Deferred design
+## Completed architecture and deferred infrastructure
 
-Credential and recruiter APIs remain deferred.
-The current offline lesson pack contains three foundational skills;
-assessments and AI requests remain online-only. Career recommendations are
-deterministic; the assistant only makes a provider call when all provider
-settings are configured.
+Phases 0 through 11 are implemented and verified. The platform features an end-to-end
+functional journey: onboarding, career navigation, vernacular AI assistance, offline
+PWA learning, coding assessments via managed sandbox, Git-inspired SkillTrack history,
+the Cryptographic Skill Passport with QR codes and independent verification, opportunity
+matching for internships, and a recruiter dashboard with privacy controls.
+
+Deferred infrastructure items include:
+- A dedicated self-hosted gVisor execution runner on Oracle Cloud (currently using the
+  managed OnlineCompiler.io REST API for coding assessments).
+- Automated enterprise ATS webhook integrations beyond the MVP recruiter portal.

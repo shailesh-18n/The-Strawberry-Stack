@@ -5,15 +5,33 @@ const LearningProgress = require('../models/LearningProgress');
 const Skill = require('../models/Skill');
 const SkillTrackEntry = require('../models/SkillTrackEntry');
 const SkillTrackProgress = require('../models/SkillTrackProgress');
+const {
+  normalizeBranchName,
+  recordMilestoneCommit,
+  syncActualAssessmentsToCommits,
+} = require('../services/skillTrackService');
 
 const router = express.Router();
 const LEVELS = ['beginner', 'intermediate', 'advanced'];
 const MAX_ENTRIES = 50;
 
-async function loadSkillTrack(studentId) {
-  const [skills, entries, assessmentProgress, lessonProgress] = await Promise.all([
+async function loadSkillTrack(student, selectedBranch = null) {
+  const studentId = student._id;
+
+  // Integrate any actual assessment records into the git-inspired commit history
+  await syncActualAssessmentsToCommits(studentId).catch(() => []);
+
+  const query = { student: studentId };
+  const cleanBranch = selectedBranch && selectedBranch !== 'all'
+    ? normalizeBranchName(selectedBranch)
+    : null;
+  if (cleanBranch) {
+    query.branch = cleanBranch;
+  }
+
+  const [skills, entries, assessmentProgress, lessonProgress, dbBranches] = await Promise.all([
     Skill.find().select('name slug').sort({ name: 1 }).lean(),
-    SkillTrackEntry.find({ student: studentId })
+    SkillTrackEntry.find(query)
       .sort({ createdAt: -1 })
       .limit(MAX_ENTRIES)
       .populate('skill', 'name slug')
@@ -28,12 +46,32 @@ async function loadSkillTrack(studentId) {
       .limit(MAX_ENTRIES)
       .populate('skill', 'name slug')
       .lean(),
+    SkillTrackEntry.distinct('branch', { student: studentId }),
   ]);
-  return { skills, entries, assessmentProgress, lessonProgress };
+
+  const branchesSet = new Set(['main']);
+  if (Array.isArray(student.aspirations)) {
+    student.aspirations.forEach((aspiration) => {
+      branchesSet.add(normalizeBranchName(aspiration));
+    });
+  }
+  dbBranches.forEach((branch) => {
+    if (branch) branchesSet.add(normalizeBranchName(branch));
+  });
+
+  return {
+    skills,
+    entries,
+    assessmentProgress,
+    lessonProgress,
+    branches: Array.from(branchesSet),
+    selectedBranch: cleanBranch || 'all',
+  };
 }
 
 async function renderSkillTrack(request, response, status = 200, error = null) {
-  const data = await loadSkillTrack(request.student._id);
+  const selectedBranch = typeof request.query?.branch === 'string' ? request.query.branch : 'all';
+  const data = await loadSkillTrack(request.student, selectedBranch);
   return response.status(status).render('skilltrack/log', {
     title: 'SkillTrack',
     user: request.student,
@@ -59,6 +97,8 @@ router.post('/skilltrack', requireStudentAuth, async (request, response, next) =
   const currentLevel = typeof request.body?.currentLevel === 'string' ? request.body.currentLevel : '';
   const commitMessage = typeof request.body?.commitMessage === 'string' ? request.body.commitMessage.trim() : '';
   const changeSummary = typeof request.body?.changeSummary === 'string' ? request.body.changeSummary.trim() : '';
+  const branch = typeof request.body?.branch === 'string' ? request.body.branch.trim() : 'main';
+  const tag = typeof request.body?.tag === 'string' ? request.body.tag.trim() : null;
 
   if (!mongoose.isValidObjectId(skillId)
     || !LEVELS.includes(currentLevel)
@@ -74,25 +114,20 @@ router.post('/skilltrack', requireStudentAuth, async (request, response, next) =
   }
 
   try {
-    const skill = await Skill.findById(skillId).select('_id');
-    if (!skill) {
-      return await renderSkillTrack(request, response, 400, 'Choose a skill from the available list.');
-    }
-    const latestEntry = await SkillTrackEntry.findOne({
-      student: request.student._id,
-      skill: skill._id,
-    }).sort({ createdAt: -1, _id: -1 }).select('currentLevel').lean();
-
-    await SkillTrackEntry.create({
-      student: request.student._id,
-      skill: skill._id,
-      previousLevel: latestEntry?.currentLevel || 'beginner',
+    await recordMilestoneCommit({
+      student: request.student,
+      skillId,
       currentLevel,
       commitMessage,
       changeSummary,
+      branch: branch || 'main',
+      tag: tag || null,
     });
     return response.redirect(303, '/skilltrack?saved=1');
   } catch (error) {
+    if (error.message === 'Choose a skill from the available list.') {
+      return await renderSkillTrack(request, response, 400, error.message);
+    }
     return next(error);
   }
 });

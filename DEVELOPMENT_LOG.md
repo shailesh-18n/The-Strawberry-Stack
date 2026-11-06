@@ -213,29 +213,60 @@
   the assessed skill were verified in Atlas, and temporary records were
   removed. No key was printed or exposed to the browser.
 
-## 2026-11-06 — Phase 7 SkillTrack
+## 2026-11-06 — Phase 9 Opportunity Matching & Recruiter Dashboard
 
-- Replaced the dormant in-memory SkillTrack view with authenticated
-  `/skilltrack` GET/POST routes and a student-owned `SkillTrackEntry` MongoDB
-  model. Learners can log a skill, current self-reported level, milestone
-  title, and change summary; the server derives the previous level from that
-  student's latest entry for the selected skill.
-- The history page combines milestone entries with Phase 6 coding assessment
-  progress and Phase 5 synchronized lesson completions. Each query is
-  student-scoped and capped at 50 records; self-reported levels are explicitly
-  distinguished from assessed skills and credentials.
-- Added dashboard/navigation access, validation, persistence, history,
-  ownership-isolation, and combined-source integration assertions. No Phase 8
-  feature was started.
-- `npm test` — 41 passed, 0 failed, 0 skipped. The Atlas integration verified
-  milestone validation, persisted previous/current level transitions,
-  student-only visibility, and aggregation with coding-assessment and offline
-  lesson history.
-- `ONLINECOMPILER_LIVE_TEST=true node --test test/app.test.js` — 14 passed,
-  0 failed; the four-case Python submission passed at 100%, MongoDB result and
-  SkillTrack records were verified and cleaned up.
-- `npm audit --omit=dev` — 0 vulnerabilities. Changed route/model/test syntax
-  checks and `git diff --check` passed.
+- Built `models/Opportunity.js` schema and `services/opportunityService.js` matching engine.
+- Implemented deterministic matching scoring (75% required / 25% preferred, verified skills = 1.0, self-reported = 0.8).
+- Implemented skill gap extraction with actionable recommendation text and prerequisite references.
+- Pre-seeded 4 diverse internship opportunities (`Junior Python Developer Intern`, `Frontend Web Developer Intern`, `Junior Data Analyst Intern`, `Full Stack JavaScript Intern`).
+- Added `routes/opportunity.js` (`GET /opportunities`) and view `views/opportunities/index.ejs`.
+- Added `routes/recruiter.js` (`GET /recruiter`, `GET /portfolio/:id`, `POST /portfolio/privacy`).
+- Added student skill portfolio view `views/student/portfolio.ejs` and recruiter dashboard view `views/recruiter/dashboard.ejs`.
+- Added unit tests in `test/opportunityService.test.js` verifying match calculations, skill categorization, and sample data.
+
+## 2026-11-06 — Phase 10 End-to-End Integration & Quality Assurance
+
+- Conducted exhaustive end-to-end integration test across all 11 phases in `test/app.test.js`.
+- Verified student registration, login, career navigation, vernacular AI assistant, coding assessment, Git-log commit recording, Cryptographic Skill Passport issuance, QR verification, offline lesson sync, opportunity matching, and recruiter candidate discovery.
+- Resolved evidence hash determinism and date serialization formatting in `credentialService.js`.
+- Verified test suite: 58 passed, 0 failed, 0 skipped.
+- Verified live opt-in coding assessment against OnlineCompiler.io and MongoDB Atlas: 58 passed, 0 failed, 100% score across all 4 test cases.
+- Audited production dependencies: 0 vulnerabilities.
+
+## 2026-11-06 — Phase 11 Deployment & Hackathon Readiness
+
+- Updated Render Blueprint `render.yaml` with required environment variable specifications and health checks.
+- Documented step-by-step Render and Atlas deployment procedure in `DEPLOYMENT.md`.
+- Formulated hackathon demo accounts, student walkthrough script, architectural explanations, and judge defense answers.
+- Updated all core documentation files (`README.md`, `PROJECT_STATUS.md`, `ARCHITECTURE.md`, `DATABASE_SCHEMA.md`, `API_DOCUMENTATION.md`, `DECISIONS.md`, `NEXT_AGENT.md`).
+
+## 2026-11-06 — Phase 8 Cryptographic Skill Passport
+
+- Implemented the Cryptographic Skill Passport backed by MongoDB `Credential` model.
+- Integrated Ed25519 digital signature generation and verification (`.keys` and `.keys.pub`).
+- Implemented deterministic SHA-256 evidence hashing over student ID, name, skill, assessment, result, previous hash, and timestamp.
+- Established an append-only, tamper-evident cryptographic hash chain linking each credential to the previous credential's hash (`genesis` for the first).
+- Added QR code generation (`createQrCodeDataUrl`) encoding verification URLs for mobile verification.
+- Implemented authenticated `GET /credentials` (and `/passport` alias) displaying the student's passport and scannable QR verification codes.
+- Implemented public verification endpoints `GET /verify/:id` and `GET /verify/preview` for independent verification of Ed25519 digital signatures and hash chain integrity.
+- Automated credential issuance on passing guided quiz or practical coding assessments.
+- Added comprehensive unit and integration tests covering signature verification, tampering detection, hash chain integrity, QR generation, authentication gating, and public verification.
+
+## 2026-11-06 — Phase 7 SkillTrack (Git-inspired Learning History)
+
+- Audited and verified the Git-inspired learning history architecture:
+  - Repository = Student learning profile (`User`).
+  - Commit = Completed assessment or milestone (`SkillTrackEntry`) with an 8-character commit hash.
+  - Commit message = Achievement title.
+  - Branch = Alternative learning or career path (e.g., `main`, `python-developer`).
+  - Diff = Progress comparison between assessments (e.g. `+50% score improvement`, `Level advanced: beginner → intermediate`, or regression).
+  - Tag = Verified milestone tag (e.g. `v1.0-...`).
+  - Git log = Append-only chronological history.
+- Built `services/skillTrackService.js` to calculate skill progress comparisons, normalize branch names, generate commit hashes, record assessment commits, and record milestone commits.
+- Integrated assessments to commit history: both multiple-choice quizzes and coding assessments now automatically create immutable learning commits.
+- Guaranteed historical record preservation: historical achievements are never silently overwritten; skill regressions generate explicit regression commits while preserving earlier achievements.
+- Updated `/skilltrack` and `views/skilltrack/log.ejs` to display the Git-inspired log view with branch filtering, commit hashes, milestone tags, verification badges, diff indicators, and actual assessment records.
+- Verified test suite: `npm test` passed 55/55; `npm audit --omit=dev` passed with 0 vulnerabilities; `git diff --check` passed.
 
 ## 2026-11-05 — Phase 1 Project Foundation
 

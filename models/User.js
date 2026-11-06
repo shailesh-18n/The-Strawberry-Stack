@@ -73,6 +73,22 @@ const userSchema = new mongoose.Schema({
     maxlength: 1000,
     default: '',
   },
+  role: {
+    type: String,
+    enum: ['student', 'recruiter'],
+    default: 'student',
+  },
+  company: {
+    type: String,
+    trim: true,
+    maxlength: 120,
+    default: '',
+  },
+  portfolioPrivacy: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'public',
+  },
 }, {
   timestamps: true,
   strict: 'throw',

@@ -9,9 +9,10 @@
         and career aspirations. You can update your profile as your goals change.
       </p>
       <% if (!user) { %>
-        <div class="d-flex gap-3 mt-4">
+        <div class="d-flex flex-wrap gap-3 mt-4">
           <a href="/auth/register" class="btn btn-primary btn-lg">Join as a Student</a>
           <a href="/auth/login" class="btn btn-outline-primary btn-lg">Login</a>
+          <a href="/recruiter" class="btn btn-outline-secondary btn-lg">Recruiter Portal</a>
         </div>
       <% } else { %>
         <div class="d-flex gap-3 mt-4">
@@ -36,21 +37,21 @@
 
 <div class="row mt-5 g-4">
   <div class="col-md-4">
-    <div class="card h-100 p-4">
-      <h4>Personal learning profile</h4>
-      <p>Keep your skills, education, and learning preferences together.</p>
+    <div class="card h-100 p-4 shadow-sm border">
+      <h2 class="h5 text-primary">Skill Graph & Career Navigator</h2>
+      <p class="mb-0 text-muted">Personalized prerequisite-aware roadmaps, SVG dependency graphs, and bilingual Bengali/English AI learning guidance.</p>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card h-100 p-4">
-      <h4>Language preferences</h4>
-      <p>Choose Bengali or English as your preferred language.</p>
+    <div class="card h-100 p-4 shadow-sm border">
+      <h2 class="h5 text-primary">Git-Inspired SkillTrack & Passport</h2>
+      <p class="mb-0 text-muted">Append-only chronological commit log, career-path branches, milestone tagging, and Ed25519 cryptographically signed credentials.</p>
     </div>
   </div>
   <div class="col-md-4">
-    <div class="card h-100 p-4">
-      <h4>Career interests</h4>
-      <p>Record the career areas you want to explore.</p>
+    <div class="card h-100 p-4 shadow-sm border">
+      <h2 class="h5 text-primary">Opportunity Matching & Recruiters</h2>
+      <p class="mb-0 text-muted">Deterministic skill-gap matching against real internship roles, actionable bridge suggestions, and recruiter verification tools.</p>
     </div>
   </div>
 </div>

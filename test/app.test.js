@@ -14,6 +14,8 @@ const StudentAssessment = require('../models/StudentAssessment');
 const LearningProgress = require('../models/LearningProgress');
 const SkillTrackProgress = require('../models/SkillTrackProgress');
 const SkillTrackEntry = require('../models/SkillTrackEntry');
+const Credential = require('../models/Credential');
+const Opportunity = require('../models/Opportunity');
 const { seedCatalog } = require('../services/catalogService');
 const { getCareerNavigator } = require('../services/careerService');
 const { evaluateSkillAssessment } = require('../services/assessmentService');
@@ -426,6 +428,61 @@ test('student registration, profile updates, login, and persistence use MongoDB'
     assert.equal(savedSkillTrackPage.status, 200);
     assert.match(savedSkillTrackHtml, /Your learning milestone was saved/);
     assert.match(savedSkillTrackHtml, /Completed a more complex exercise/);
+
+    const taggedMilestone = await post('/skilltrack', {
+      _csrf: csrfFrom(savedSkillTrackHtml),
+      skillId: String(pythonSkill._id),
+      currentLevel: 'advanced',
+      commitMessage: 'Tagged milestone achievement',
+      changeSummary: 'Verified project milestone completed on python branch.',
+      branch: 'python-developer',
+      tag: 'v1.0-milestone',
+    });
+    assert.equal(taggedMilestone.status, 303);
+    const taggedEntry = await SkillTrackEntry.findOne({
+      student: user._id,
+      tag: 'v1.0-milestone',
+    }).lean();
+    assert.ok(taggedEntry, 'tagged milestone record must be created');
+    assert.equal(taggedEntry.branch, 'python-developer');
+    assert.equal(taggedEntry.tag, 'v1.0-milestone');
+    assert.match(taggedEntry.commitHash, /^[0-9a-f]{8}$/);
+
+    // Skill regression test
+    const regressedMilestone = await post('/skilltrack', {
+      _csrf: csrfFrom(savedSkillTrackHtml),
+      skillId: String(pythonSkill._id),
+      currentLevel: 'intermediate',
+      commitMessage: 'Refactoring after identifying knowledge gap',
+      changeSummary: 'Revisiting intermediate concepts after encountering difficulties.',
+      branch: 'python-developer',
+    });
+    assert.equal(regressedMilestone.status, 303);
+    const regressedEntry = await SkillTrackEntry.findOne({
+      student: user._id,
+      commitMessage: 'Refactoring after identifying knowledge gap',
+    }).lean();
+    assert.ok(regressedEntry, 'regressed record must be saved');
+    assert.equal(regressedEntry.previousLevel, 'advanced');
+    assert.equal(regressedEntry.currentLevel, 'intermediate');
+    assert.equal(regressedEntry.status, 'regressed');
+    assert.match(regressedEntry.diff, /Skill regression recorded/);
+
+    // Historical record preservation: historical achievements are NEVER silently overwritten!
+    const advancedHistoryEntry = await SkillTrackEntry.findOne({
+      student: user._id,
+      commitMessage: 'Completed a more complex exercise',
+    }).lean();
+    assert.ok(advancedHistoryEntry, 'prior advanced achievement must be preserved');
+    assert.equal(advancedHistoryEntry.currentLevel, 'advanced');
+    assert.equal(await SkillTrackEntry.countDocuments({ student: user._id }), 4);
+
+    // Chronological order verification
+    const allEntries = await SkillTrackEntry.find({ student: user._id }).sort({ createdAt: -1 }).lean();
+    assert.equal(allEntries[0].commitMessage, 'Refactoring after identifying knowledge gap');
+    assert.equal(allEntries[1].commitMessage, 'Tagged milestone achievement');
+    assert.equal(allEntries[2].commitMessage, 'Completed a more complex exercise');
+    assert.equal(allEntries[3].commitMessage, 'Solved a list practice task');
     await SkillTrackEntry.create({
       student: privateStudentId,
       skill: pythonSkill._id,
@@ -697,6 +754,23 @@ test('student registration, profile updates, login, and persistence use MongoDB'
     assert.match(combinedSkillTrackHtml, /Coding assessment progress/);
     assert.match(combinedSkillTrackHtml, /Offline lesson progress/);
     assert.match(combinedSkillTrackHtml, /HTML\s*<\/strong> completed/);
+    assert.match(combinedSkillTrackHtml, /Repo:/, 'SkillTrack renders repository header');
+    assert.match(combinedSkillTrackHtml, /commit\s+[0-9a-f]{8}/, 'SkillTrack renders git commit hashes');
+    assert.match(combinedSkillTrackHtml, /🏷️\s*v1\.0/, 'SkillTrack renders milestone tags');
+    assert.match(combinedSkillTrackHtml, /✓ Verified Assessment/, 'SkillTrack renders verified assessment badge');
+    assert.match(combinedSkillTrackHtml, /\s*python-developer/, 'SkillTrack renders career path branches');
+
+    // Assessment-to-commit integration check
+    const assessmentCommits = await SkillTrackEntry.find({
+      student: user._id,
+      entryType: 'assessment',
+    }).lean();
+    assert.ok(assessmentCommits.length >= 1, 'actual student assessments must integrate as commits in SkillTrack');
+    const verifiedCommit = assessmentCommits.find((c) => c.isVerified);
+    assert.ok(verifiedCommit, 'verified assessment commit must exist');
+    assert.match(verifiedCommit.commitMessage, /Passed/);
+    assert.ok(verifiedCommit.score > 0);
+    assert.match(verifiedCommit.tag, /verified/);
     const invalidProgressSync = await postJson(
       '/learning/progress/sync',
       { completedSkills: ['not-a-lesson'], baseCompletedSkills: [] },
@@ -733,6 +807,101 @@ test('student registration, profile updates, login, and persistence use MongoDB'
     assert.match(persistedHtml, /value="English" selected/);
     assert.match(persistedHtml, /value="Web Developer" checked/);
 
+    // Phase 8: Cryptographic Skill Passport integration
+    const credentialsPage = await get('/credentials');
+    assert.equal(credentialsPage.status, 200);
+    const credentialsHtml = await credentialsPage.text();
+    assert.match(credentialsHtml, /Skill Passport/);
+    assert.match(credentialsHtml, /Cryptographic credentials/);
+    assert.match(credentialsHtml, /Ed25519/);
+    assert.match(credentialsHtml, /Scan to verify/);
+
+    const passportRedirect = await get('/passport');
+    assert.equal(passportRedirect.status, 301);
+    assert.equal(passportRedirect.headers.get('location'), '/credentials');
+
+    const studentCredentials = await Credential.find({ student: user._id }).sort({ createdAt: 1 }).lean();
+    assert.ok(studentCredentials.length >= 1, 'passed assessment must generate a cryptographic credential');
+    const firstCredential = studentCredentials[0];
+    assert.equal(firstCredential.issuer, 'VidyaChain');
+    assert.equal(firstCredential.status, 'verified');
+    assert.equal(firstCredential.previousHash, 'genesis');
+    assert.match(firstCredential.evidenceHash, /^[0-9a-f]{64}$/);
+    assert.ok(firstCredential.signature);
+
+    // Public verification endpoint
+    const verifyPage = await fetch(`${baseUrl}/verify/${firstCredential._id}`);
+    assert.equal(verifyPage.status, 200);
+    const verifyHtml = await verifyPage.text();
+    assert.match(verifyHtml, /Valid cryptographic credential/);
+    assert.match(verifyHtml, /Ed25519/);
+    assert.match(verifyHtml, new RegExp(firstCredential.evidenceHash));
+
+    // Public preview endpoint with query param
+    const previewPage = await fetch(`${baseUrl}/verify/preview?verificationId=${firstCredential._id}`);
+    assert.equal(previewPage.status, 200);
+    assert.match(await previewPage.text(), /Valid cryptographic credential/);
+
+    // Public verification of invalid/nonexistent credential
+    const invalidVerifyPage = await fetch(`${baseUrl}/verify/not-an-id`);
+    assert.equal(invalidVerifyPage.status, 200);
+    assert.match(await invalidVerifyPage.text(), /Credential invalid or unavailable/);
+
+    // Phase 9: Opportunity Matching
+    const oppsPage = await get('/opportunities');
+    assert.equal(oppsPage.status, 200);
+    const oppsHtml = await oppsPage.text();
+    assert.match(oppsHtml, /Internships & career opportunities/);
+    assert.match(oppsHtml, /Bengal Infotech Labs/);
+    assert.match(oppsHtml, /Match/);
+    assert.match(oppsHtml, /Bridge your skill gap/);
+
+    // Phase 9: Student Skill Portfolio & Privacy Controls
+    const portfolioPage = await get(`/portfolio/${user._id}`);
+    assert.equal(portfolioPage.status, 200);
+    const portfolioHtml = await portfolioPage.text();
+    assert.match(portfolioHtml, /Student Skill Portfolio/);
+    assert.match(portfolioHtml, /Verified & Assessed Skills/);
+    assert.match(portfolioHtml, /Cryptographic Skill Passport/);
+    assert.match(portfolioHtml, /Git-inspired Learning History/);
+
+    // Set portfolio to private
+    const privateToggle = await post('/portfolio/privacy', {
+      _csrf: csrfFrom(portfolioHtml),
+      privacy: 'private',
+    });
+    assert.equal(privateToggle.status, 303);
+    const userDocPrivate = await User.findById(user._id);
+    assert.equal(userDocPrivate.portfolioPrivacy, 'private');
+
+    // Anonymous fetch of private portfolio
+    const anonPortfolio = await fetch(`${baseUrl}/portfolio/${user._id}`);
+    assert.equal(anonPortfolio.status, 200);
+    const anonPortfolioHtml = await anonPortfolio.text();
+    assert.match(anonPortfolioHtml, /Private Student Portfolio/);
+
+    // Restore portfolio to public
+    const publicToggle = await post('/portfolio/privacy', {
+      _csrf: csrfFrom(portfolioHtml),
+      privacy: 'public',
+    });
+    assert.equal(publicToggle.status, 303);
+
+    // Phase 9: Recruiter Dashboard
+    const recruiterPage = await fetch(`${baseUrl}/recruiter`);
+    assert.equal(recruiterPage.status, 200);
+    const recruiterHtml = await recruiterPage.text();
+    assert.match(recruiterHtml, /Recruiter dashboard/);
+    assert.match(recruiterHtml, /Active Opportunities/);
+    assert.match(recruiterHtml, /Candidate Discovery Pool/);
+    assert.match(recruiterHtml, new RegExp(user.name));
+    assert.match(recruiterHtml, /Quick credential verification/);
+
+    // Recruiter search with skill filter
+    const filteredRecruiter = await fetch(`${baseUrl}/recruiter?skillFilter=python`);
+    assert.equal(filteredRecruiter.status, 200);
+    assert.match(await filteredRecruiter.text(), new RegExp(user.name));
+
     const tokenFailure = await fetch(`${baseUrl}/auth/logout`, {
       method: 'POST',
       headers: {
@@ -753,6 +922,12 @@ test('student registration, profile updates, login, and persistence use MongoDB'
     assert.equal(anonymousSkillTrackPage.headers.get('location'), '/auth/login');
     const anonymousAssistant = await get('/assistant');
     assert.equal(anonymousAssistant.status, 302);
+    const anonymousCredentials = await get('/credentials');
+    assert.equal(anonymousCredentials.status, 302);
+    assert.equal(anonymousCredentials.headers.get('location'), '/auth/login');
+    const anonymousOpportunities = await get('/opportunities');
+    assert.equal(anonymousOpportunities.status, 302);
+    assert.equal(anonymousOpportunities.headers.get('location'), '/auth/login');
   } finally {
     const testUser = await User.findOne({ email }).select('_id');
     if (testUser) {
@@ -760,6 +935,7 @@ test('student registration, profile updates, login, and persistence use MongoDB'
       await SkillTrackProgress.deleteMany({ student: testUser._id });
       await SkillTrackEntry.deleteMany({ student: testUser._id });
       await LearningProgress.deleteMany({ student: testUser._id });
+      await Credential.deleteMany({ student: testUser._id });
     }
     await SkillTrackEntry.deleteMany({ student: privateStudentId });
     await User.deleteOne({ email });

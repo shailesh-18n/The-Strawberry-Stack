@@ -1,13 +1,13 @@
 # VidyaChain
 
-VidyaChain is an MVP web application for helping students connect learning
-interests and career goals. It provides student registration, login, and a
-persistent learning profile, followed by a profile-driven Career Navigator
-with skill gaps, career paths, and an accessible skill graph. It also provides
-skill assessments, a SkillTrack milestone and progress history, a vernacular
-learning assistant, and bilingual offline lessons with locally saved and
-synchronizable completion progress. Credentials and recruiter routes remain
-outside the completed phases.
+VidyaChain is an end-to-end web platform connecting student learning
+interests, skill verification, and career opportunities. It provides student
+registration, persistent learning profiles, a Career Navigator with deterministic
+skill-gap ranking and SVG dependency graphs, bilingual offline-first lessons with
+IndexedDB sync, Bengali/English AI learning guidance, practical coding assessments,
+a Git-inspired SkillTrack history, an Ed25519 Cryptographic Skill Passport with
+QR verification, opportunity matching for internships, and a Recruiter Dashboard
+with candidate talent discovery and privacy controls.
 
 ## Stack
 
@@ -16,7 +16,8 @@ outside the completed phases.
 - EJS server-rendered views
 - Bootstrap 5
 - MongoDB with Mongoose
-- Vanilla JavaScript; do not replace the approved stack with React or Next.js
+- Ed25519 asymmetric cryptography and SHA-256 evidence hashing
+- Vanilla JavaScript; no heavy client framework dependencies
 
 ## Getting started
 
@@ -83,15 +84,25 @@ OpenRouter requests using `openai/gpt-4o` were verified in Bengali and English.
 - `GET /career` shows a deterministic profile-driven recommendation and skill
   graph; `GET /career?career=<slug>` focuses a known career path.
 - `GET /assessment` lists skill-linked challenges; `POST
-  /assessment/:challengeId/submit` records fixed-answer quiz results.
+  /assessment/:challengeId/submit` records fixed-answer quiz results, commits to
+  SkillTrack, and issues a cryptographic credential on pass.
 - `POST /assessment/:challengeId/submit-code` sends the fixed Python coding
-  challenge to OnlineCompiler.io, then persists bounded results and
-  `SkillTrackProgress` in MongoDB. Source is not stored; only its hash is.
-- `GET /skilltrack` shows self-reported learning milestones, coding
-  assessment progress, and synchronized offline lesson completions.
-- `POST /skilltrack` records a learner milestone in MongoDB. The previous
-  level is derived from that student's latest milestone for the selected
-  skill; entries are private to the student and are not verified credentials.
+  challenge to OnlineCompiler.io, then persists bounded results,
+  `SkillTrackProgress`, Git-inspired commits, and cryptographic credentials in MongoDB.
+  Source is not stored; only its hash is.
+- `GET /skilltrack` shows the Git-inspired learning history commit log,
+  career-path branches, milestone tags, verification badges, and score diffs.
+- `POST /skilltrack` records an immutable learner milestone commit in MongoDB.
+- `GET /credentials` (and `/passport`) displays the student's Cryptographic Skill
+  Passport with Ed25519 digital signatures, evidence hashes, and QR codes.
+- `GET /verify/:id` and `GET /verify/preview` provide public independent cryptographic
+  credential and hash chain verification.
+- `GET /opportunities` matches student skills deterministically against active
+  internship opportunities, displaying match percentages and missing skill gap suggestions.
+- `GET /recruiter` provides the Recruiter Dashboard for discovering candidate talent
+  pools, filtering by verified skills, and viewing candidate portfolios.
+- `GET /portfolio/:id` renders a student's public/private skill portfolio.
+- `POST /portfolio/privacy` toggles student portfolio privacy between public and private.
 - `/public/offline-learning.html` provides cached English/Bengali HTML, CSS,
   and JavaScript lessons with offline quizzes. Completions and queued sync
   state are stored in IndexedDB and can be synced to the signed-in student's
@@ -122,19 +133,24 @@ its recommendation ranking is deterministic.
   audited by VidyaChain. Keep the provider key server-side and never send source
   without consent.
 - Keep the `.env` file and generated `.keys` files out of Git.
-- Phases 0–7 are implemented and verified, including native Chrome
-  installation, offline quizzes, IndexedDB progress, and synchronization.
-  Phase 6 has a limited OnlineCompiler.io-backed MVP whose provider/database
-  path passed the live opt-in test. Phase 7 adds self-reported milestones and
-  an aggregated student-only progress history. A Render Free web-service
-  Blueprint is prepared, but the application has not been deployed and no
-  Oracle VM/gVisor runner is provisioned. Do not begin Phase 8.
-- Phase 6's managed coding engine does not include a VidyaChain-hosted
-  isolated runner; deployment status and constraints are in
+- Phases 0–11 are fully implemented and verified.
+  - Phase 7 implements the Git-inspired learning history with chronological commit
+    logging, career branches, milestone tagging, and score diffs.
+  - Phase 8 implements the Cryptographic Skill Passport with Ed25519 asymmetric
+    signatures, deterministic SHA-256 evidence hashing, cryptographic hash chaining,
+    and QR verification.
+  - Phase 9 implements Opportunity Matching with realistic internship listings,
+    deterministic skill matching (verified vs reported), gap-bridging recommendations,
+    a Recruiter Dashboard, student skill portfolios, and privacy controls.
+  - Phase 10 verifies the end-to-end student journey across all services with full
+    MongoDB persistence and live API testing.
+  - Phase 11 prepares production deployment with Render Blueprint configuration (`render.yaml`),
+    MongoDB Atlas setup, environment security guidelines, demo accounts, and hackathon presentation resources.
+- The coding assessment uses a third-party managed execution provider; the
+  Express process never evaluates student code. Deployment status and constraints are in
   [DEPLOYMENT.md](DEPLOYMENT.md) and the security architecture is in
-  [PHASE6_EXECUTION_ARCHITECTURE.md](PHASE6_EXECUTION_ARCHITECTURE.md). Do not
-  begin Phase 8.
-- Offline mode includes only the three packaged foundational lessons and
+  [PHASE6_EXECUTION_ARCHITECTURE.md](PHASE6_EXECUTION_ARCHITECTURE.md).
+- Offline mode includes the three packaged foundational lessons and
   quizzes. AI generation, guided assessments, account features, and cloud
   progress synchronization require a network connection.
 

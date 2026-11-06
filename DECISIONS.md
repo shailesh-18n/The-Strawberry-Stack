@@ -97,16 +97,61 @@
   Render/Oracle deployment and authenticated app-runner communication remain
   unprovisioned and unimplemented.
 
-## Phase 7 SkillTrack
+## Phase 7 SkillTrack (Git-inspired Learning History)
 
-- Keep SkillTrack milestone entries separate from assessment progress and
-  offline lesson completion. The history view aggregates those sources
-  without duplicating them.
-- Scope every SkillTrack read to the authenticated student. Persist
-  self-reported level transitions and derive the previous level from that
-  student's latest milestone for the skill.
-- Self-reported levels are progress notes, not independently verified
-  achievements or credentials.
+- Implemented the Git-inspired learning history model: Repository = Student learning
+  profile; Commit = Completed assessment or milestone; Commit message = Achievement title;
+  Branch = Learning/career path; Diff = Progress comparison between attempts; Tag =
+  Verified milestone; Git log = Append-only chronological history.
+- Historical achievements are append-only and never silently overwritten. Skill regressions
+  are explicitly recorded as new commits with diff notes while preserving past milestones.
+- Assessment completions automatically integrate into the commit history with tags and
+  verification badges.
+
+## Phase 8 Cryptographic Skill Passport
+
+- Used asymmetric Ed25519 digital signatures to sign credentials. The private key remains
+  server-side in `.keys` (ignored by Git) while the public key `.keys.pub` verifies signatures.
+- Implemented deterministic SHA-256 evidence hashing over student ID, student name, skill,
+  assessment, result, previous hash, and timestamp.
+- Established an append-only cryptographic hash chain linking each credential to the previous
+  credential's `evidenceHash` (`genesis` for the first).
+- Stored credentials in a dedicated MongoDB `Credential` collection with unique idempotency
+  indexes on `{ student, assessment }`.
+- Provided a student-authenticated passport interface (`/credentials` and `/passport`) with
+  scannable QR verification codes.
+- Provided public verification routes (`/verify/:id` and `/verify/preview`) for independent
+  cryptographic validation of signature and hash chain integrity without requiring authentication.
+
+## Phase 9 Opportunity Matching & Recruiter Dashboard
+
+- **Deterministic Skill Matching:** Employed weighted matching with 75% allocated to required
+  skills and 25% to preferred skills. Assessed/verified skills receive full 1.0 weight while
+  self-reported skills receive 0.8 weight.
+- **Skill Gap Bridging:** The matching service highlights specific missing skills and references
+  recommended learning activities and roadmaps directly from the catalog.
+- **Recruiter Dashboard:** Built `/recruiter` with active opportunity listings, candidate discovery,
+  and skill-based talent filtering.
+- **Student Privacy Controls:** Added student portfolio privacy settings (`public` / `private`)
+  toggled via CSRF-protected endpoint `POST /portfolio/privacy`.
+- **Realistic Sample Data:** Pre-seeded 4 diverse internship opportunities (`Junior Python Developer Intern`,
+  `Frontend Web Developer Intern`, `Junior Data Analyst Intern`, `Full Stack JavaScript Intern`) on startup.
+
+## Phase 10 Integration and Quality Assurance
+
+- Verified the complete unified student journey from initial registration, career ranking,
+  vernacular assistant, coding assessment, Git-log commit generation, cryptographic passport issuance,
+  QR code scanning, offline lesson sync, opportunity matching, and recruiter candidate discovery.
+- Ensured strict MongoDB persistence, append-only immutability of historical records,
+  idempotent re-runs, and full error recovery across all mounted routes.
+
+## Phase 11 Deployment and Hackathon Readiness
+
+- Prepared Render Blueprint `render.yaml` with explicit environment variable specifications
+  (`MONGODB_URI`, `ONLINECOMPILER_API_KEY`, `AI_API_KEY`, `AI_API_URL`, `DNS_SERVERS`).
+- Configured production proxy trust (`TRUST_PROXY=true`) to honor Render's single ingress hop.
+- Prepared comprehensive hackathon demonstration script, architecture defense talking points,
+  and responses to likely judge questions regarding cryptography, sandboxing, and offline-first sync.
 
 ## Free deployment target — requested, not provisioned
 

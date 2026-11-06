@@ -9,6 +9,8 @@ const { seedAssessmentConfigs, seedSkillData } = require('../services/seedServic
 const { evaluateSkillAssessment } = require('../services/assessmentService');
 const { getCodingChallenge } = require('../services/codingAssessmentService');
 const { MAX_SOURCE_BYTES, OnlineCompilerError, runTests } = require('../services/onlineCompilerService');
+const { recordAssessmentCommit } = require('../services/skillTrackService');
+const { issueMongoCredential } = require('../services/credentialService');
 
 const router = express.Router();
 const assessmentSkills = new Map(seedSkillData().map((skill) => [skill.slug, skill.name]));
@@ -184,19 +186,41 @@ router.post('/assessment/:challengeId/submit', requireStudentAuth, async (reques
       throw new Error(`Assessment skill "${challenge.skillSlug}" is missing from the skill catalogue.`);
     }
     const result = evaluateSkillAssessment(challenge.id, request.body);
-    await StudentAssessment.create({
+    const quizScore = Math.round(((result.passedTests || 0) / Math.max(challenge.questions.length, 1)) * 100);
+    const attempt = await StudentAssessment.create({
       student: request.student._id,
       challengeId: challenge.id,
       skill: skill._id,
       passed: result.success,
       passedTests: result.passedTests || 0,
       totalTests: challenge.questions.length,
+      score: quizScore,
+      verdict: result.success ? 'passed' : 'needs_revision',
+    });
+    await recordAssessmentCommit({
+      student: request.student,
+      skill,
+      assessment: attempt,
+      challengeTitle: challenge.title || challenge.id,
+      result: {
+        passed: result.success,
+        passedTests: result.passedTests || 0,
+        totalTests: challenge.questions.length,
+        score: quizScore,
+        verdict: result.success ? 'passed' : 'needs_revision',
+      },
     });
     if (result.success) {
       const alreadyAssessed = request.student.assessedSkills
         .some((assessedSkill) => String(assessedSkill) === String(skill._id));
       if (!alreadyAssessed) request.student.assessedSkills.push(skill._id);
       await request.student.save();
+      await issueMongoCredential({
+        student: request.student,
+        skill,
+        assessment: attempt,
+        assessmentResult: 'passed',
+      }).catch(() => null);
     }
 
     return response.render('assessment/result', {
@@ -276,6 +300,27 @@ router.post('/assessment/:challengeId/submit-code', requireStudentAuth, limitCod
       await runTests({ code, challenge, submissionKey }),
     );
     await recordSkillTrackProgress(request, skill, attempt);
+    await recordAssessmentCommit({
+      student: request.student,
+      skill,
+      assessment: attempt,
+      challengeTitle: challenge.title || challenge.id,
+      result: {
+        passed: attempt.passed,
+        passedTests: attempt.passedTests,
+        totalTests: attempt.totalTests,
+        score: attempt.score,
+        verdict: attempt.verdict,
+      },
+    });
+    if (attempt.passed) {
+      await issueMongoCredential({
+        student: request.student,
+        skill,
+        assessment: attempt,
+        assessmentResult: 'passed',
+      }).catch(() => null);
+    }
     return renderCodeResult(response, request, challenge, skill, resultFromAssessment(attempt));
   } catch (error) {
     if (error instanceof OnlineCompilerError) {

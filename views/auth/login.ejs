@@ -6,6 +6,9 @@
       <% if (error) { %>
         <div class="alert alert-danger" role="alert"><%= error %></div>
       <% } %>
+      <div class="alert alert-info py-2 small mb-3">
+        <strong>Hackathon Evaluation:</strong> Register a student account in 10 seconds or explore recruiter candidate discovery at <a href="/recruiter" class="alert-link">Recruiter Dashboard</a>.
+      </div>
       <form method="POST" action="/auth/login">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="mb-3">

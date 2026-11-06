@@ -24,6 +24,9 @@ if catalogue seeding fails.
 - `learningPreferences`: up to 10 strings, max 80 characters each
 - `accessNeeds`: up to 10 strings, max 80 characters each
 - `profileSummary`: optional string, max 1,000 characters
+- `role`: string enum `['student', 'recruiter']`, default `'student'`
+- `company`: optional trimmed string for recruiters, max 120 characters
+- `portfolioPrivacy`: string enum `['public', 'private']`, default `'public'`
 - `createdAt` / `updatedAt`: Mongoose timestamps
 
 Profile updates do not change email or password. Password reset and email
@@ -75,23 +78,45 @@ OnlineCompiler.io only after the student consents. Provider retention is
 governed by its plan terms; VidyaChain does not claim independent verification
 of the provider's sandbox or data handling.
 
-### SkillTrackEntry
+### SkillTrackEntry (Git-inspired Learning History)
 
 - `student`: `User` ObjectId; all reads are scoped to this owner
 - `skill`: `Skill` ObjectId from the server-side skill catalogue
-- `previousLevel`, `currentLevel`: learner-reported levels from
-  `beginner`, `intermediate`, and `advanced`
-- `commitMessage`: required 3-100 character milestone title
+- `previousLevel`, `currentLevel`: skill levels (`beginner`, `intermediate`, `advanced`)
+- `commitMessage`: required 3-100 character milestone or assessment achievement title
 - `changeSummary`: required 3-500 character progress description
+- `commitHash`: 8-character hex string representing the git commit hash
+- `branch`: career or learning path branch (e.g. `main`, `python-developer`)
+- `tag`: verified milestone tag (e.g. `v1.0-...`) or null
+- `isVerified`: boolean indicating verified assessment status
+- `entryType`: `'milestone'` | `'assessment'` | `'lesson'`
+- `assessment`: optional `StudentAssessment` ObjectId reference
+- `score`, `previousScore`, `scoreDelta`: numerical assessment scoring progress
+- `diff`: progress comparison string (e.g. `+50% score improvement` or `Level advanced`)
+- `status`: `'initial'` | `'improved'` | `'regressed'` | `'unchanged'`
 - timestamps
-- compound indexes on `{ student, createdAt }` and `{ student, skill,
-  createdAt }` support private recent-history and per-skill history queries
+- compound indexes on `{ student, createdAt }`, `{ student, skill, createdAt }`, `{ student, branch, createdAt }`, and `{ student, assessment }`
 
-The route derives `previousLevel` from the student's latest entry for the
-selected skill (or `beginner` for the first entry). These are self-reported
-progress notes, not verified skills or credentials. The SkillTrack page also
-reads `SkillTrackProgress` and `LearningProgress`; it does not duplicate those
-source records.
+All historical achievements are append-only and preserved: previous records are never silently overwritten.
+
+### Credential (Cryptographic Skill Passport)
+
+- `student`: `User` ObjectId
+- `studentName`: student name string
+- `skill`: `Skill` ObjectId reference
+- `skillName`: human-readable skill name
+- `assessment`: `StudentAssessment` ObjectId reference
+- `assessmentId`: challenge slug identifier
+- `assessmentResult`: result verdict (default `'passed'`)
+- `evidenceHash`: deterministic SHA-256 hash over `{ userId, studentName, skillName, assessmentId, assessmentResult, previousHash, issuedAt }`
+- `previousHash`: cryptographic hash chain reference linking to the student's previous credential (`genesis` for the first)
+- `issuer`: `'VidyaChain'`
+- `signature`: Ed25519 asymmetric cryptographic digital signature
+- `status`: `'verified'` | `'revoked'`
+- `issuedAt`: ISO-8601 string timestamp
+- `qrCode`: base64 image/png data URL for verification
+- unique compound index on `{ student, assessment }` prevents duplicate credential issuance
+- compound index on `{ student, createdAt }` for passport retrieval
 
 ### LearningProgress
 
@@ -114,19 +139,31 @@ at request time. The personalized recommendation and assistant conversation
 are not persisted. Offline lesson completion is persisted only after an
 authenticated student synchronizes it.
 
+### Opportunity (Internship & Job Listings)
+
+- `title`: required string, max 120 characters (e.g. `'Junior Python Developer Intern'`)
+- `company`: required string, max 120 characters (e.g. `'DataCraft Labs'`)
+- `location`: required string, max 120 characters (e.g. `'Remote (India)'`)
+- `type`: enum `['Internship', 'Full-time', 'Part-time', 'Apprenticeship']`, default `'Internship'`
+- `stipend`: optional string, max 80 characters (e.g. `'₹15,000 - ₹25,000 / month'`)
+- `description`: required string, max 2,000 characters
+- `requiredSkills`: array of `Skill` ObjectId references required for the role
+- `preferredSkills`: array of `Skill` ObjectId references preferred for the role
+- `status`: enum `['active', 'closed']`, default `'active'`
+- `createdAt` / `updatedAt`: Mongoose timestamps
+- compound index on `{ status: 1, createdAt: -1 }` for active opportunity queries
+
 Development startup without `MONGODB_URI` is allowed for foundation/health
 checks; readiness reports disconnected and student persistence operations
 cannot succeed. A configured connection failure prevents startup. Production
 startup requires the URI. Copy `.env.example` to `.env`; `.env` is excluded
 from Git.
 
-## Deferred conceptual entities
+## Future conceptual entities
 
-The following entities remain conceptual and are not implemented as Mongoose
-models. The earlier `utils/store.js` feature drafts retain sample records in
-memory only.
+All core MVP collections (Users, Careers, Skills, Assessments, Progress,
+SkillTrack Entries, Credentials, Opportunities, and Sessions) are fully implemented
+and verified. Future enterprise expansions may include:
 
-- **Credential:** user, student name, skill, assessment, evidence hash, issuer, signature, status, creation time.
-
-Credential fields, validation, indexes, relationships, and retention
-requirements remain to be confirmed against the approved later-phase scope.
+- **Enterprise ATS Webhooks:** Bi-directional sync with platforms like Lever, Greenhouse, or Workday.
+- **Direct Employer In-App Messaging:** Secure student-to-employer messaging channels.

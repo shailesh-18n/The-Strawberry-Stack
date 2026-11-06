@@ -1,0 +1,158 @@
+<%- include('../partials/header') %>
+
+<% if (!isAccessible) { %>
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 text-center py-5">
+      <div class="card p-5 shadow-sm border">
+        <span class="fs-1 mb-3">🔒</span>
+        <h1 class="h3">Private Student Portfolio</h1>
+        <p class="text-muted">This student has set their skill portfolio to private. Only authorized recruiters or the student can view it.</p>
+        <div>
+          <a href="/" class="btn btn-primary">Return to Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+<% } else { %>
+  <div class="mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <span class="badge bg-primary-subtle text-primary border border-primary mb-1">Student Skill Portfolio</span>
+        <h1 class="mb-1"><%= student.name %></h1>
+        <p class="lead mb-0"><%= student.profileSummary || 'Dedicated student building verified skills on VidyaChain.' %></p>
+      </div>
+
+      <% if (isOwner) { %>
+        <div class="card p-3 bg-light border">
+          <form method="POST" action="/portfolio/privacy" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label class="small fw-semibold text-muted" for="portfolio-privacy">Portfolio Privacy:</label>
+            <select class="form-select form-select-sm w-auto" id="portfolio-privacy" name="privacy" onchange="this.form.submit()">
+              <option value="public" <%= student.portfolioPrivacy === 'public' ? 'selected' : '' %>>🌐 Public</option>
+              <option value="private" <%= student.portfolioPrivacy === 'private' ? 'selected' : '' %>>🔒 Private</option>
+            </select>
+          </form>
+        </div>
+      <% } else { %>
+        <div>
+          <span class="badge bg-success py-2 px-3 fs-6">✓ VidyaChain Verified Profile</span>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+      <section class="card p-4 h-100 shadow-sm border">
+        <h2 class="h5 mb-3">Profile Overview</h2>
+        <ul class="list-unstyled mb-0 small">
+          <li class="mb-2"><strong>Preferred Language:</strong> <%= student.preferredLanguage %></li>
+          <% if (student.educationLevel) { %>
+            <li class="mb-2"><strong>Education:</strong> <%= student.educationLevel %></li>
+          <% } %>
+          <li class="mb-2">
+            <strong>Career Aspirations:</strong><br>
+            <% (student.aspirations || []).forEach((asp) => { %>
+              <span class="badge bg-light text-dark border me-1 mt-1"><%= asp %></span>
+            <% }) %>
+          </li>
+          <li>
+            <strong>Learning Interests:</strong><br>
+            <% (student.interests || []).forEach((int) => { %>
+              <span class="badge bg-info-subtle text-info border border-info me-1 mt-1"><%= int %></span>
+            <% }) %>
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <div class="col-12 col-md-8">
+      <section class="card p-4 h-100 shadow-sm border">
+        <h2 class="h5 mb-3">Verified & Assessed Skills</h2>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <% (assessedSkills || []).forEach((skill) => { %>
+            <span class="badge bg-success-subtle text-success border border-success p-2">
+              ✓ <%= skill.name %> <small class="text-muted">(Assessment Verified)</small>
+            </span>
+          <% }) %>
+          <% (student.skillInventory || []).forEach((skillName) => { %>
+            <% const alreadyAssessed = (assessedSkills || []).some(s => s.name.toLowerCase() === skillName.toLowerCase()); %>
+            <% if (!alreadyAssessed) { %>
+              <span class="badge bg-light text-dark border p-2">
+                ● <%= skillName %> <small class="text-muted">(Reported)</small>
+              </span>
+            <% } %>
+          <% }) %>
+        </div>
+        <p class="text-muted small mb-0">
+          Verified skills are backed by fixed-input algorithmic or multi-test coding assessments with Ed25519 cryptographic credentials.
+        </p>
+      </section>
+    </div>
+  </div>
+
+  <section class="card p-4 mb-4 shadow-sm border" aria-labelledby="credentials-title">
+    <h2 class="h4 mb-3" id="credentials-title">Cryptographic Skill Passport</h2>
+    <% if (credentials && credentials.length) { %>
+      <div class="row g-3">
+        <% credentials.forEach((credential) => { %>
+          <div class="col-12 col-lg-6">
+            <div class="card p-3 border bg-light h-100">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                <div>
+                  <span class="badge bg-success mb-1">✓ Verified</span>
+                  <h3 class="h6 mb-0 text-dark"><%= credential.skillName %></h3>
+                  <p class="small text-muted mb-0">Issuer: <strong><%= credential.issuer || 'VidyaChain' %></strong></p>
+                </div>
+                <% if (credential.qrCode) { %>
+                  <img src="<%= credential.qrCode %>" alt="QR Code" style="width: 70px; height: 70px;" class="img-thumbnail">
+                <% } %>
+              </div>
+              <p class="font-monospace text-truncate small text-muted mb-2">
+                Evidence Hash: <%= credential.evidenceHash %>
+              </p>
+              <div class="d-flex justify-content-between align-items-center mt-auto">
+                <span class="small text-muted">Ed25519 Signed</span>
+                <a href="/verify/<%= credential._id %>" class="btn btn-outline-primary btn-sm">Verify Credential</a>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="text-muted mb-0">No signed credentials issued yet.</p>
+    <% } %>
+  </section>
+
+  <section class="card p-4 shadow-sm border" aria-labelledby="history-title">
+    <h2 class="h4 mb-3" id="history-title">Git-inspired Learning History (Recent Commits)</h2>
+    <% if (entries && entries.length) { %>
+      <ol class="list-group list-group-flush">
+        <% entries.slice(0, 10).forEach((entry) => { %>
+          <li class="list-group-item px-0">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+              <div>
+                <span class="badge bg-secondary font-monospace">commit <%= entry.commitHash || String(entry._id).slice(0, 8) %></span>
+                <span class="badge bg-light text-dark border"> <%= entry.branch || 'main' %></span>
+                <% if (entry.tag) { %><span class="badge bg-primary">🏷️ <%= entry.tag %></span><% } %>
+                <% if (entry.isVerified) { %><span class="badge bg-success">✓ Verified</span><% } %>
+              </div>
+              <% if (entry.status === 'improved') { %>
+                <span class="badge bg-success-subtle text-success border border-success">▲ <%= entry.diff || 'Improved' %></span>
+              <% } else if (entry.status === 'regressed') { %>
+                <span class="badge bg-danger-subtle text-danger border border-danger">▼ <%= entry.diff || 'Regressed' %></span>
+              <% } %>
+            </div>
+            <strong><%= entry.commitMessage %></strong>
+            <p class="small text-muted mb-0"><%= entry.changeSummary %></p>
+          </li>
+        <% }) %>
+      </ol>
+    <% } else { %>
+      <p class="text-muted mb-0">No milestones or learning records logged yet.</p>
+    <% } %>
+  </section>
+<% } %>
+
+<%- include('../partials/footer') %>
+

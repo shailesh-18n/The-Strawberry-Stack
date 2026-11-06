@@ -1,23 +1,129 @@
 <%- include('../partials/header') %>
-<div class="card p-4">
-  <p class="text-primary fw-semibold mb-1">Recruiter dashboard</p>
-  <h1>Verified student profile</h1>
-  <p>Recruiters can verify credentials using the student’s QR code or verification ID.</p>
-  <div class="mt-3">
-    <form method="GET" action="/verify/preview">
-      <div class="input-group">
-        <input class="form-control" name="verificationId" placeholder="Enter credential ID" />
-        <button class="btn btn-primary" type="submit">Verify</button>
-      </div>
-    </form>
-  </div>
-  <div class="mt-4">
-    <h4>Sample shared data</h4>
-    <ul>
-      <li>Verified skill milestones</li>
-      <li>Assessment summary</li>
-      <li>Learning progression</li>
-    </ul>
+<div class="mb-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <p class="text-primary fw-semibold mb-1">Recruiter Portal • Phase 9</p>
+      <h1>Recruiter dashboard</h1>
+      <p class="lead mb-0">Discover qualified student talent, review verified skills, and verify cryptographic Ed25519 credentials.</p>
+    </div>
+    <div>
+      <a href="/opportunities" class="btn btn-outline-primary">View All Opportunities</a>
+    </div>
   </div>
 </div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-4">
+    <section class="card h-100 p-3 shadow-sm border">
+      <h2 class="h6 text-muted">Active Opportunities</h2>
+      <p class="display-6 mb-0 text-primary"><%= opportunities ? opportunities.length : 0 %></p>
+    </section>
+  </div>
+  <div class="col-12 col-md-4">
+    <section class="card h-100 p-3 shadow-sm border">
+      <h2 class="h6 text-muted">Verified Candidates in Pool</h2>
+      <p class="display-6 mb-0 text-success"><%= candidates ? candidates.length : 0 %></p>
+    </section>
+  </div>
+  <div class="col-12 col-md-4">
+    <section class="card h-100 p-3 shadow-sm border">
+      <h2 class="h6 text-muted">Verification Standard</h2>
+      <p class="display-6 mb-0 text-info fs-3 mt-1">Ed25519 & SHA-256</p>
+    </section>
+  </div>
+</div>
+
+<section class="card p-4 mb-4 shadow-sm border" aria-labelledby="verify-tool-title">
+  <h2 class="h4" id="verify-tool-title">Quick credential verification</h2>
+  <p class="text-muted small">Verify a candidate’s cryptographic credential using their verification ID or by scanning their passport QR code.</p>
+  <form method="GET" action="/verify/preview" class="row g-2">
+    <div class="col-12 col-md-9">
+      <input class="form-control" name="verificationId" placeholder="Enter Credential ID or Evidence Hash" required />
+    </div>
+    <div class="col-12 col-md-3">
+      <button class="btn btn-primary w-100" type="submit">Verify Signature</button>
+    </div>
+  </form>
+</section>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-5">
+    <section class="card p-4 h-100 shadow-sm border" aria-labelledby="opps-title">
+      <h2 class="h4 mb-3" id="opps-title">Current Opportunities</h2>
+      <% if (opportunities && opportunities.length) { %>
+        <div class="list-group list-group-flush">
+          <% opportunities.forEach((opp) => { %>
+            <div class="list-group-item px-0">
+              <span class="badge bg-light text-dark border mb-1"><%= opp.type %></span>
+              <h3 class="h6 mb-1 text-dark"><%= opp.title %></h3>
+              <p class="text-muted small mb-1"><strong><%= opp.company %></strong> • <%= opp.location %></p>
+              <div class="d-flex flex-wrap gap-1">
+                <% (opp.requiredSkills || []).forEach((skill) => { %>
+                  <span class="badge bg-secondary-subtle text-secondary small"><%= skill.name %></span>
+                <% }) %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="text-muted mb-0">No active opportunities listed.</p>
+      <% } %>
+    </section>
+  </div>
+
+  <div class="col-12 col-lg-7">
+    <section class="card p-4 h-100 shadow-sm border" aria-labelledby="candidates-title">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h2 class="h4 mb-0" id="candidates-title">Candidate Discovery Pool</h2>
+        <form method="GET" action="/recruiter" class="d-flex gap-2">
+          <input type="text" name="skillFilter" class="form-control form-control-sm" placeholder="Filter by skill..." value="<%= skillFilter || '' %>">
+          <button type="submit" class="btn btn-outline-primary btn-sm">Filter</button>
+          <% if (skillFilter) { %><a href="/recruiter" class="btn btn-outline-secondary btn-sm">Clear</a><% } %>
+        </form>
+      </div>
+
+      <% if (candidates && candidates.length) { %>
+        <div class="list-group list-group-flush">
+          <% candidates.forEach((c) => { %>
+            <div class="list-group-item px-0 py-3">
+              <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-2">
+                <div>
+                  <h3 class="h6 mb-0 text-dark"><%= c.name %></h3>
+                  <p class="text-muted small mb-0">
+                    <%= c.educationLevel || 'Student' %> • Language: <%= c.preferredLanguage %>
+                  </p>
+                </div>
+                <div>
+                  <a href="/portfolio/<%= c._id %>" class="btn btn-outline-primary btn-sm">View Portfolio</a>
+                </div>
+              </div>
+
+              <div class="mb-2">
+                <span class="small fw-semibold text-muted">Verified Skills:</span>
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                  <% if (c.assessedSkills && c.assessedSkills.length) { %>
+                    <% c.assessedSkills.forEach((s) => { %>
+                      <span class="badge bg-success-subtle text-success border border-success">✓ <%= s.name %></span>
+                    <% }) %>
+                  <% } else { %>
+                    <span class="text-muted small">Self-reported inventory only</span>
+                  <% } %>
+                </div>
+              </div>
+
+              <% if (c.credentialsCount > 0) { %>
+                <span class="badge bg-info-subtle text-info border border-info">
+                  🛡️ <%= c.credentialsCount %> Cryptographic Credential<%= c.credentialsCount > 1 ? 's' : '' %>
+                </span>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="text-muted mb-0">No public candidates matched the selected filter.</p>
+      <% } %>
+    </section>
+  </div>
+</div>
+
 <%- include('../partials/footer') %>

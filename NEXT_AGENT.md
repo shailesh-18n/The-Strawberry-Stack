@@ -2,23 +2,14 @@
 
 ## Current phase and boundary
 
-Phases 0–7 are verified. Phase 6 has a limited coding-assessment MVP using
-OnlineCompiler.io for remote Python execution, MongoDB persistence, and
-SkillTrack assessment progress. The server-side key, consent, request
-validation, rate limit, idempotency, hidden-test result suppression, and
-source-hash-only persistence are implemented. The live provider/MongoDB test
-passed after the user updated the local ignored `.env` with an active REST API
-key. `ONLINECOMPILER_LIVE_TEST=true node --test test/app.test.js` passed 14/14;
-the harmless sum program passed all four cases, and MongoDB assessment,
-SkillTrack, and assessed-skill persistence were checked before test cleanup.
-Never print or request the key itself.
+Phases 0–11 are fully completed and verified.
+- Phase 7: Git-inspired learning history (`SkillTrackEntry`, commits, branches, tags, diffs, regression preservation).
+- Phase 8: Cryptographic Skill Passport (`Credential`, Ed25519 signing, SHA-256 evidence hashing, hash chaining, QR verification, public `/verify/:id`).
+- Phase 9: Opportunity Matching and Recruiter Dashboard (`Opportunity`, deterministic matching, missing skill recommendations, recruiter portal `/recruiter`, public/private candidate portfolio `/portfolio/:id`).
+- Phase 10: End-to-End Integration and Quality Assurance (58/58 tests passing, live Python execution passing, 0 npm audit vulnerabilities).
+- Phase 11: Deployment and Hackathon Readiness (Render Blueprint `render.yaml`, Atlas configuration, demo accounts, demo script, judge Q&A).
 
-This is not a VidyaChain-hosted gVisor runner. Provider sandbox and data
-retention claims are not independently audited. Render and Oracle are still
-unprovisioned; `render.yaml` is only a Blueprint and there is no separate
-runner. Read `DEPLOYMENT.md` and `PHASE6_EXECUTION_ARCHITECTURE.md` for
-limitations. Phase 7 SkillTrack is implemented as documented below. Do not
-begin Phase 8.
+All planned phases are complete. No further core phases remain unstarted.
 
 ## Completed Phase 2 behavior
 
@@ -110,21 +101,47 @@ begin Phase 8.
 - No self-hosted gVisor runner, Oracle VM, Render service, or private
   app-runner channel exists.
 
-## Phase 7 SkillTrack — implemented
+## Phase 7 SkillTrack — Git-inspired Learning History
 
-- `/skilltrack` is authenticated and displays only the signed-in student's
-  self-reported milestones, coding assessment progress, and synchronized
-  offline lesson completions. Each section is capped at the latest 50 rows.
-- `POST /skilltrack` validates a catalog skill, a supported learner-reported
-  level, title, and summary; CSRF is enforced by the app middleware. The
-  server derives the previous level from that student's latest entry for the
-  selected skill (default `beginner`).
-- `SkillTrackEntry` stores milestone history. These self-reported levels are
-  not verified skills or credentials; do not treat them as one.
-- Atlas integration tests cover invalid form data, successive level changes,
-  persisted history, and isolation from another student's record.
-- No Phase 8 credentials/recruiter work has started. Wait for explicit
-  approval before proceeding.
+- `/skilltrack` is authenticated and displays the student's Git-inspired
+  learning history. It features:
+  - Repository = Student learning profile (`User`).
+  - Commit = Completed assessment or milestone with an 8-character commit hash (`SkillTrackEntry`).
+  - Commit message = Achievement title.
+  - Branch = Learning or career path (`main`, `python-developer`, etc.).
+  - Diff = Progress comparison between attempts (e.g. `+50% score improvement`, `Level advanced: beginner → intermediate`, or regression).
+  - Tag = Verified milestone (e.g. `v1.0-...`).
+  - Git log = Append-only chronological history.
+- Assessment-to-commit integration creates immutable commits for guided quiz and
+  coding submissions.
+- Historical achievements are preserved and never silently overwritten. Even if
+  a skill regresses, the history reflects the regression commit while keeping
+  prior achievements intact.
+
+## Phase 8 Cryptographic Skill Passport — implemented
+
+- `models/Credential.js` stores cryptographically signed skill achievements.
+- Asymmetric Ed25519 digital signatures (`.keys` and `.keys.pub`) sign deterministic
+  SHA-256 evidence hashes.
+- Tamper-evident cryptographic hash chain links each credential to the previous
+  credential's `evidenceHash` (`genesis` for the first).
+- `/credentials` (and alias `/passport`) is an authenticated student view that
+  displays the student's skill passport and QR codes.
+- `/verify/:id` and `/verify/preview` are public endpoints that independently verify
+  the Ed25519 digital signature and evidence hash chain.
+
+## Phase 9 Opportunity Matching & Recruiter Dashboard — implemented
+
+- `models/Opportunity.js` stores internship listings with required and preferred skill references.
+- `services/opportunityService.js` performs weighted deterministic matching (75% required / 25% preferred; verified skills = 1.0, self-reported = 0.8) and extracts missing skill learning recommendations.
+- `routes/opportunity.js` (`GET /opportunities`) renders matching internships for the signed-in student.
+- `routes/recruiter.js` (`GET /recruiter`, `GET /portfolio/:id`, `POST /portfolio/privacy`) provides candidate discovery, talent pool filtering, and portfolio viewing with student privacy controls.
+
+## Phase 10 & 11 Integration & Deployment Readiness — verified
+
+- Comprehensive integration tests in `test/app.test.js` verify the end-to-end student journey across all services and routes.
+- Unit tests in `test/skillTrackService.test.js`, `test/credentialService.test.js`, and `test/opportunityService.test.js` verify specific cryptographic, historical tracking, and matching logic.
+- Production readiness verified with Render Blueprint `render.yaml`, Atlas SRV resolution, demo accounts, and hackathon presentation guides.
 
 ## Known repository/security issue
 
